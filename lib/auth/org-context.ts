@@ -1,0 +1,123 @@
+import { auth } from "@clerk/nextjs/server";
+import { and, eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { clients, organizations, teamMembers } from "@/lib/db/schema";
+import {
+  mapTeamMemberRoleToOrgRole,
+  mapClerkRoleToTeamMemberRole,
+  isOrgRole,
+} from "./roles";
+import type { OrgContext, OrgRole } from "./types";
+import { problem } from "@/lib/api/response";
+
+export async function getOrgContext(): Promise<OrgContext | null> {
+  const { userId, orgId, orgRole } = await auth();
+
+  if (!userId || !orgId) {
+    return null;
+  }
+
+  const organization = await db.query.organizations.findFirst({
+    where: eq(organizations.clerkOrgId, orgId),
+    columns: {
+      id: true,
+      planTier: true,
+    },
+  });
+
+  if (!organization) {
+    return null;
+  }
+
+  const clientRecord = await db.query.clients.findFirst({
+    where: and(
+      eq(clients.organizationId, organization.id),
+      eq(clients.clerkUserId, userId),
+    ),
+    columns: { id: true },
+  });
+
+  if (clientRecord) {
+    return {
+      clerkUserId: userId,
+      clerkOrgId: orgId,
+      organizationId: organization.id,
+      role: "client",
+      planTier: organization.planTier,
+    };
+  }
+
+  const member = await db.query.teamMembers.findFirst({
+    where: and(
+      eq(teamMembers.organizationId, organization.id),
+      eq(teamMembers.clerkUserId, userId),
+    ),
+    columns: { role: true },
+  });
+
+  const role: OrgRole = member
+    ? mapTeamMemberRoleToOrgRole(member.role)
+    : orgRole
+      ? mapTeamMemberRoleToOrgRole(mapClerkRoleToTeamMemberRole(orgRole))
+      : "coach";
+
+  return {
+    clerkUserId: userId,
+    clerkOrgId: orgId,
+    organizationId: organization.id,
+    role,
+    planTier: organization.planTier,
+  };
+}
+
+export async function requireOrg(): Promise<OrgContext> {
+  const { userId, orgId } = await auth();
+
+  if (!userId) {
+    throw problem({
+      type: "unauthorized",
+      title: "Authentication required",
+      status: 401,
+      detail: "You must be signed in to access this resource.",
+    });
+  }
+
+  if (!orgId) {
+    throw problem({
+      type: "forbidden",
+      title: "Organization required",
+      status: 403,
+      detail: "An active organization context is required.",
+    });
+  }
+
+  const context = await getOrgContext();
+
+  if (!context) {
+    throw problem({
+      type: "forbidden",
+      title: "Organization not found",
+      status: 403,
+      detail: "The active organization is not synced to Helios yet.",
+    });
+  }
+
+  return context;
+}
+
+export async function requireRole(
+  ...roles: OrgRole[]
+): Promise<OrgContext> {
+  const context = await requireOrg();
+
+  if (!isOrgRole(context.role, roles)) {
+    throw problem({
+      type: "forbidden",
+      title: "Insufficient permissions",
+      status: 403,
+      detail: `Required role: ${roles.join(" or ")}.`,
+    });
+  }
+
+  return context;
+}

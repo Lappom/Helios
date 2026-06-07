@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Toaster } from "@/components/ui/sonner";
+import { clerkAppearance } from "@/lib/clerk/appearance";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -29,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="fr" className={cn(inter.variable, jetbrainsMono.variable, "font-sans")}>
       <body className="min-h-screen bg-canvas font-sans text-body antialiased">
-        {children}
+        <ClerkProvider appearance={clerkAppearance}>{children}</ClerkProvider>
         <Toaster theme="dark" />
       </body>
     </html>

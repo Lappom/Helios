@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "#", label: "Produit" },
-  { href: "#", label: "Tarifs" },
+  { href: "/tarifs", label: "Tarifs" },
   { href: "#", label: "Ressources" },
   { href: "#", label: "Clients" },
 ];
@@ -37,11 +37,16 @@ export function TopNav({ className }: TopNavProps) {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <Button variant="ghost" size="sm" className="text-body hover:text-on-dark">
-            Connexion
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-body hover:text-on-dark"
+            asChild
+          >
+            <Link href="/sign-in">Connexion</Link>
           </Button>
-          <Button size="lg" className="h-10 px-5 font-semibold">
-            Commencer
+          <Button size="lg" className="h-10 px-5 font-semibold" asChild>
+            <Link href="/sign-up">Commencer</Link>
           </Button>
         </div>
       </div>
