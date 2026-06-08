@@ -272,6 +272,28 @@ export const automationActionLogStatusEnum = pgEnum(
   ["pending", "completed", "failed", "skipped"],
 );
 
+export const pathwayStepTypeEnum = pgEnum("pathway_step_type", [
+  "program",
+  "assessment",
+  "message",
+  "wait",
+]);
+
+export const pathwayEnrollmentStatusEnum = pgEnum("pathway_enrollment_status", [
+  "pending",
+  "running",
+  "completed",
+  "failed",
+  "cancelled",
+]);
+
+export const pathwayStepLogStatusEnum = pgEnum("pathway_step_log_status", [
+  "pending",
+  "completed",
+  "failed",
+  "skipped",
+]);
+
 export const coachTaskStatusEnum = pgEnum("coach_task_status", [
   "open",
   "done",

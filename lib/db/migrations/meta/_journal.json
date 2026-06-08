@@ -169,6 +169,13 @@
       "when": 1780910064978,
       "tag": "0023_dry_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1780910711803,
+      "tag": "0024_sudden_morlocks",
+      "breakpoints": true
     }
   ]
 }

@@ -87,6 +87,12 @@ import {
   questionnaireSubmissions,
   questionnaires,
 } from "./questionnaires";
+import {
+  coachingPathways,
+  pathwayEnrollments,
+  pathwayStepLogs,
+  pathwaySteps,
+} from "./pathways";
 
 export * from "./enums";
 export * from "./organization";
@@ -111,6 +117,7 @@ export * from "./videos";
 export * from "./automations";
 export * from "./coach-tasks";
 export * from "./questionnaires";
+export * from "./pathways";
 
 export const organizationsRelations = relations(
   organizations,
@@ -165,6 +172,10 @@ export const organizationsRelations = relations(
     questionnaireSchedules: many(questionnaireSchedules),
     questionnaireSubmissions: many(questionnaireSubmissions),
     questionnaireResponses: many(questionnaireResponses),
+    coachingPathways: many(coachingPathways),
+    pathwaySteps: many(pathwaySteps),
+    pathwayEnrollments: many(pathwayEnrollments),
+    pathwayStepLogs: many(pathwayStepLogs),
   }),
 );
 
@@ -1274,3 +1285,61 @@ export const questionnaireResponsesRelations = relations(
     }),
   }),
 );
+
+export const coachingPathwaysRelations = relations(
+  coachingPathways,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [coachingPathways.organizationId],
+      references: [organizations.id],
+    }),
+    steps: many(pathwaySteps),
+    enrollments: many(pathwayEnrollments),
+  }),
+);
+
+export const pathwayStepsRelations = relations(pathwaySteps, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [pathwaySteps.organizationId],
+    references: [organizations.id],
+  }),
+  pathway: one(coachingPathways, {
+    fields: [pathwaySteps.pathwayId],
+    references: [coachingPathways.id],
+  }),
+  logs: many(pathwayStepLogs),
+}));
+
+export const pathwayEnrollmentsRelations = relations(
+  pathwayEnrollments,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [pathwayEnrollments.organizationId],
+      references: [organizations.id],
+    }),
+    pathway: one(coachingPathways, {
+      fields: [pathwayEnrollments.pathwayId],
+      references: [coachingPathways.id],
+    }),
+    client: one(clients, {
+      fields: [pathwayEnrollments.clientId],
+      references: [clients.id],
+    }),
+    stepLogs: many(pathwayStepLogs),
+  }),
+);
+
+export const pathwayStepLogsRelations = relations(pathwayStepLogs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [pathwayStepLogs.organizationId],
+    references: [organizations.id],
+  }),
+  enrollment: one(pathwayEnrollments, {
+    fields: [pathwayStepLogs.enrollmentId],
+    references: [pathwayEnrollments.id],
+  }),
+  step: one(pathwaySteps, {
+    fields: [pathwayStepLogs.stepId],
+    references: [pathwaySteps.id],
+  }),
+}));

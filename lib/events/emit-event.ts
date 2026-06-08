@@ -40,5 +40,14 @@ export function emitHeliosEvent<T extends HeliosEventName>(
           );
         }),
     );
+    void import("@/lib/pathways/listeners").then(
+      ({ handlePathwayClientCreated }) =>
+        handlePathwayClientCreated(clientCreatedPayload).catch((error) => {
+          console.error(
+            "[helios:event] pathway listener failed for client.created",
+            error,
+          );
+        }),
+    );
   }
 }
