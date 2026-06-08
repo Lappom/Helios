@@ -120,3 +120,17 @@ export const coachServiceTypeEnum = pgEnum("coach_service_type", [
   "coaching",
   "call",
 ]);
+
+export const bookingStatusEnum = pgEnum("booking_status", [
+  "pending",
+  "confirmed",
+  "cancelled",
+  "completed",
+  "no_show",
+]);
+
+export const bookingPaymentStatusEnum = pgEnum("booking_payment_status", [
+  "unpaid",
+  "paid",
+  "external",
+]);

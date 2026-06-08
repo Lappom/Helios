@@ -48,7 +48,7 @@ export default async function CoachProfilePage({
     <>
       <CoachProfileHero coach={coach} />
 
-      <CoachServicesGrid services={coach.services} />
+      <CoachServicesGrid services={coach.services} coachSlug={slug} />
 
       {coach.certifications.length > 0 ? (
         <section className="py-section bg-canvas">
@@ -73,30 +73,32 @@ export default async function CoachProfilePage({
         </section>
       ) : null}
 
-      <section className="py-section">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="bg-primary text-on-yellow rounded-lg px-8 py-16 text-center md:px-16">
-            <h2 className="text-display-md mb-4 font-bold tracking-tight">
-              Prêt à commencer ?
-            </h2>
-            <p className="text-body-md mx-auto mb-8 max-w-xl opacity-80">
-              La prise de rendez-vous en ligne arrive bientôt. Contactez{" "}
-              {coach.displayName} via ses réseaux en attendant.
-            </p>
-            <Button
-              size="lg"
-              variant="secondary"
-              className="bg-canvas text-on-dark hover:bg-canvas/90 h-10 px-5 font-semibold"
-              disabled
-            >
-              Réserver une séance
-            </Button>
-            <p className="text-body-sm mt-4 opacity-70">
-              Disponible avec la prise de RDV (P3.2)
-            </p>
+      {coach.services.some((s) => s.bookingEnabled) ? (
+        <section className="py-section">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="bg-primary text-on-yellow rounded-lg px-8 py-16 text-center md:px-16">
+              <h2 className="text-display-md mb-4 font-bold tracking-tight">
+                Prêt à commencer ?
+              </h2>
+              <p className="text-body-md mx-auto mb-8 max-w-xl opacity-80">
+                Réservez une séance en ligne avec {coach.displayName}.
+              </p>
+              <Button
+                size="lg"
+                variant="secondary"
+                className="bg-canvas text-on-dark hover:bg-canvas/90 h-10 px-5 font-semibold"
+                asChild
+              >
+                <Link
+                  href={`/find/coaches/${slug}/book/${coach.services.find((s) => s.bookingEnabled)!.id}`}
+                >
+                  Réserver une séance
+                </Link>
+              </Button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       <div className="pb-section mx-auto max-w-7xl px-6 text-center">
         <Button variant="ghost" asChild>

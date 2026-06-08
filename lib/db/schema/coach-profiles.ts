@@ -51,6 +51,10 @@ export const coachProfiles = pgTable(
       .default({}),
     isPublished: boolean("is_published").notNull().default(false),
     isInDirectory: boolean("is_in_directory").notNull().default(false),
+    timezone: text("timezone").notNull().default("Europe/Paris"),
+    cancellationHoursBefore: integer("cancellation_hours_before")
+      .notNull()
+      .default(24),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

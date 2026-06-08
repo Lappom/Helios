@@ -54,6 +54,11 @@ import {
 } from "./session-feedback";
 import { habitAssignments, habitLogs, habits } from "./habits";
 import { coachProfiles, coachServices } from "./coach-profiles";
+import {
+  availabilityRules,
+  blockedDates,
+  bookings,
+} from "./bookings";
 
 export * from "./enums";
 export * from "./organization";
@@ -68,6 +73,7 @@ export * from "./assessments";
 export * from "./session-feedback";
 export * from "./habits";
 export * from "./coach-profiles";
+export * from "./bookings";
 
 export const organizationsRelations = relations(
   organizations,
@@ -94,6 +100,9 @@ export const organizationsRelations = relations(
     habitLogs: many(habitLogs),
     coachProfiles: many(coachProfiles),
     coachServices: many(coachServices),
+    availabilityRules: many(availabilityRules),
+    blockedDates: many(blockedDates),
+    bookings: many(bookings),
   }),
 );
 
@@ -778,7 +787,7 @@ export const coachProfilesRelations = relations(
   }),
 );
 
-export const coachServicesRelations = relations(coachServices, ({ one }) => ({
+export const coachServicesRelations = relations(coachServices, ({ one, many }) => ({
   organization: one(organizations, {
     fields: [coachServices.organizationId],
     references: [organizations.id],
@@ -786,5 +795,38 @@ export const coachServicesRelations = relations(coachServices, ({ one }) => ({
   profile: one(coachProfiles, {
     fields: [coachServices.profileId],
     references: [coachProfiles.id],
+  }),
+  bookings: many(bookings),
+}));
+
+export const availabilityRulesRelations = relations(
+  availabilityRules,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [availabilityRules.organizationId],
+      references: [organizations.id],
+    }),
+  }),
+);
+
+export const blockedDatesRelations = relations(blockedDates, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [blockedDates.organizationId],
+    references: [organizations.id],
+  }),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [bookings.organizationId],
+    references: [organizations.id],
+  }),
+  service: one(coachServices, {
+    fields: [bookings.serviceId],
+    references: [coachServices.id],
+  }),
+  client: one(clients, {
+    fields: [bookings.clientId],
+    references: [clients.id],
   }),
 }));

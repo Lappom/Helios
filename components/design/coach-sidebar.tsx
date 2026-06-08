@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Apple,
+  Calendar,
   ClipboardList,
   Dumbbell,
   Flame,
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { href: "/coach/nutrition", label: "Nutrition", icon: Apple },
   { href: "/coach/messages", label: "Messages", icon: MessageSquare },
   { href: "/coach/assessments", label: "Bilans", icon: ClipboardList },
+  { href: "/coach/calendar", label: "Agenda", icon: Calendar },
   { href: "/coach/habits", label: "Habitudes", icon: Flame },
   { href: "/coach/boutique", label: "Boutique", icon: Store },
   { href: "/coach/settings", label: "Settings", icon: Settings },

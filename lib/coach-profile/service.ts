@@ -38,6 +38,8 @@ export type CoachProfileDto = {
   socialLinks: CoachSocialLinks;
   isPublished: boolean;
   isInDirectory: boolean;
+  timezone: string;
+  cancellationHoursBefore: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -87,6 +89,8 @@ function mapProfile(row: typeof coachProfiles.$inferSelect): CoachProfileDto {
     socialLinks: row.socialLinks ?? {},
     isPublished: row.isPublished,
     isInDirectory: row.isInDirectory,
+    timezone: row.timezone,
+    cancellationHoursBefore: row.cancellationHoursBefore,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

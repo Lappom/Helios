@@ -11,10 +11,15 @@ const SERVICE_TYPE_LABELS = {
 
 type CoachServicesGridProps = {
   services: CoachServiceDto[];
+  coachSlug?: string;
   className?: string;
 };
 
-export function CoachServicesGrid({ services, className }: CoachServicesGridProps) {
+export function CoachServicesGrid({
+  services,
+  coachSlug,
+  className,
+}: CoachServicesGridProps) {
   if (services.length === 0) {
     return (
       <section className={cn("py-section bg-surface-soft", className)}>
@@ -53,10 +58,20 @@ export function CoachServicesGrid({ services, className }: CoachServicesGridProp
                 features={[
                   `${service.durationMinutes} minutes`,
                   service.isOnline ? "En ligne" : "En présentiel",
-                  "Réservation bientôt disponible",
+                  service.bookingEnabled
+                    ? "Réservation en ligne"
+                    : "Contact direct",
                 ]}
                 featured={index === 0}
-                ctaLabel="Choisir"
+                ctaLabel={
+                  service.bookingEnabled && coachSlug ? "Réserver" : "Bientôt"
+                }
+                ctaHref={
+                  service.bookingEnabled && coachSlug
+                    ? `/find/coaches/${coachSlug}/book/${service.id}`
+                    : undefined
+                }
+                hideCta={!service.bookingEnabled || !coachSlug}
                 className="h-full"
               />
             </div>

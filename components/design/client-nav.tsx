@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Apple,
+  Calendar,
   Flame,
   Home,
   MessageSquare,
@@ -26,6 +27,7 @@ const navItems: NavItem[] = [
   { href: "/client", label: "Accueil", icon: Home, exact: true },
   { href: "/client/program", label: "Programme", icon: Dumbbell },
   { href: "/client/nutrition", label: "Nutrition", icon: Apple },
+  { href: "/client/bookings", label: "RDV", icon: Calendar },
   { href: "/client/habits", label: "Habitudes", icon: Flame, feature: "habits" },
   { href: "/client/progress", label: "Progrès", icon: TrendingUp },
   { href: "/client/messages", label: "Messages", icon: MessageSquare },

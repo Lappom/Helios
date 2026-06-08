@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,8 @@ type PricingTierCardProps = {
   features: string[];
   featured?: boolean;
   ctaLabel?: string;
+  ctaHref?: string;
+  hideCta?: boolean;
   className?: string;
 };
 
@@ -20,6 +23,8 @@ export function PricingTierCard({
   features,
   featured = false,
   ctaLabel = "Choisir",
+  ctaHref,
+  hideCta = false,
   className,
 }: PricingTierCardProps) {
   return (
@@ -49,15 +54,29 @@ export function PricingTierCard({
           </li>
         ))}
       </ul>
-      <Button
-        variant={featured ? "secondary" : "default"}
-        className={cn(
-          "h-10 w-full font-semibold",
-          featured && "bg-canvas text-on-dark hover:bg-canvas/90",
-        )}
-      >
-        {ctaLabel}
-      </Button>
+      {hideCta ? null : ctaHref ? (
+        <Button
+          asChild
+          variant={featured ? "secondary" : "default"}
+          className={cn(
+            "h-10 w-full font-semibold",
+            featured && "bg-canvas text-on-dark hover:bg-canvas/90",
+            !featured && "bg-primary text-on-primary hover:bg-primary-active",
+          )}
+        >
+          <Link href={ctaHref}>{ctaLabel}</Link>
+        </Button>
+      ) : (
+        <Button
+          variant={featured ? "secondary" : "default"}
+          className={cn(
+            "h-10 w-full font-semibold",
+            featured && "bg-canvas text-on-dark hover:bg-canvas/90",
+          )}
+        >
+          {ctaLabel}
+        </Button>
+      )}
     </article>
   );
 }
