@@ -1,11 +1,15 @@
-export default function ClientPortalPage() {
+type ClientPlaceholderPageProps = {
+  title: string;
+};
+
+export function ClientPlaceholderPage({ title }: ClientPlaceholderPageProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-4">
       <h1 className="text-display-sm text-on-dark font-bold tracking-tight">
-        Accueil
+        {title}
       </h1>
       <p className="text-body-md text-muted">
-        Séance du jour, rappels et activité récente — à venir en P1.
+        Module à venir en P1 — placeholder P0.7.
       </p>
     </div>
   );

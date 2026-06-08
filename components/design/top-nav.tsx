@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { UserButton } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -13,7 +15,9 @@ type TopNavProps = {
   className?: string;
 };
 
-export function TopNav({ className }: TopNavProps) {
+export async function TopNav({ className }: TopNavProps) {
+  const { userId } = await auth();
+
   return (
     <header
       className={cn(
@@ -37,17 +41,39 @@ export function TopNav({ className }: TopNavProps) {
           ))}
         </nav>
         <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="text-body hover:text-on-dark"
-            asChild
-          >
-            <Link href="/sign-in">Connexion</Link>
-          </Button>
-          <Button size="lg" className="h-10 px-5 font-semibold" asChild>
-            <Link href="/sign-up">Commencer</Link>
-          </Button>
+          {userId ? (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-body hover:text-on-dark"
+                asChild
+              >
+                <Link href="/redirect">Dashboard</Link>
+              </Button>
+              <UserButton
+                appearance={{
+                  elements: {
+                    avatarBox: "size-8",
+                  },
+                }}
+              />
+            </>
+          ) : (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-body hover:text-on-dark"
+                asChild
+              >
+                <Link href="/sign-in">Connexion</Link>
+              </Button>
+              <Button size="lg" className="h-10 px-5 font-semibold" asChild>
+                <Link href="/sign-up">Commencer</Link>
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </header>

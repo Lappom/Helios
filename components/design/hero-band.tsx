@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -5,6 +6,9 @@ type HeroBandProps = {
   title: string;
   subtitle: string;
   ctaLabel?: string;
+  ctaHref?: string;
+  secondaryLabel?: string;
+  secondaryHref?: string;
   className?: string;
   children?: React.ReactNode;
 };
@@ -13,6 +17,9 @@ export function HeroBand({
   title,
   subtitle,
   ctaLabel = "Commencer",
+  ctaHref,
+  secondaryLabel = "Voir la démo",
+  secondaryHref,
   className,
   children,
 }: HeroBandProps) {
@@ -23,12 +30,24 @@ export function HeroBand({
           <h1 className="text-display-lg text-on-dark mb-6">{title}</h1>
           <p className="text-body-md text-body mb-8 max-w-xl">{subtitle}</p>
           <div className="flex flex-wrap gap-3">
-            <Button size="lg" className="h-10 px-5 font-semibold">
-              {ctaLabel}
-            </Button>
-            <Button variant="secondary" size="lg" className="h-10 px-5">
-              Voir la démo
-            </Button>
+            {ctaHref ? (
+              <Button size="lg" className="h-10 px-5 font-semibold" asChild>
+                <Link href={ctaHref}>{ctaLabel}</Link>
+              </Button>
+            ) : (
+              <Button size="lg" className="h-10 px-5 font-semibold">
+                {ctaLabel}
+              </Button>
+            )}
+            {secondaryHref ? (
+              <Button variant="secondary" size="lg" className="h-10 px-5" asChild>
+                <Link href={secondaryHref}>{secondaryLabel}</Link>
+              </Button>
+            ) : (
+              <Button variant="secondary" size="lg" className="h-10 px-5">
+                {secondaryLabel}
+              </Button>
+            )}
           </div>
         </div>
         <div className="lg:col-span-5">
