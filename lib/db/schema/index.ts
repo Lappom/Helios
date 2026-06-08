@@ -53,6 +53,7 @@ import {
   sessionFeedbackTemplates,
 } from "./session-feedback";
 import { habitAssignments, habitLogs, habits } from "./habits";
+import { coachProfiles, coachServices } from "./coach-profiles";
 
 export * from "./enums";
 export * from "./organization";
@@ -66,6 +67,7 @@ export * from "./session-logs";
 export * from "./assessments";
 export * from "./session-feedback";
 export * from "./habits";
+export * from "./coach-profiles";
 
 export const organizationsRelations = relations(
   organizations,
@@ -90,6 +92,8 @@ export const organizationsRelations = relations(
     habits: many(habits),
     habitAssignments: many(habitAssignments),
     habitLogs: many(habitLogs),
+    coachProfiles: many(coachProfiles),
+    coachServices: many(coachServices),
   }),
 );
 
@@ -760,5 +764,27 @@ export const habitLogsRelations = relations(habitLogs, ({ one }) => ({
   client: one(clients, {
     fields: [habitLogs.clientId],
     references: [clients.id],
+  }),
+}));
+
+export const coachProfilesRelations = relations(
+  coachProfiles,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [coachProfiles.organizationId],
+      references: [organizations.id],
+    }),
+    services: many(coachServices),
+  }),
+);
+
+export const coachServicesRelations = relations(coachServices, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [coachServices.organizationId],
+    references: [organizations.id],
+  }),
+  profile: one(coachProfiles, {
+    fields: [coachServices.profileId],
+    references: [coachProfiles.id],
   }),
 }));

@@ -114,3 +114,9 @@ export const habitAssignmentStatusEnum = pgEnum("habit_assignment_status", [
   "paused",
   "completed",
 ]);
+
+export const coachServiceTypeEnum = pgEnum("coach_service_type", [
+  "assessment",
+  "coaching",
+  "call",
+]);

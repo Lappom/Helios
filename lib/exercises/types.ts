@@ -1,4 +1,5 @@
 import type { ExerciseMedia } from "@/lib/db/schema/exercises";
+import { slugifyName } from "@/lib/utils/slug";
 
 export function buildExerciseSearchVector(
   name: string,
@@ -12,13 +13,7 @@ export function buildExerciseSearchVector(
 }
 
 export function slugifyExerciseName(name: string): string {
-  return name
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120);
+  return slugifyName(name).slice(0, 120);
 }
 
 export type ExerciseListItem = {

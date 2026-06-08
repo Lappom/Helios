@@ -1,6 +1,7 @@
 const DEFAULT_ORIGINS = [
   "http://localhost:3000",
   "https://helios.lappom.fr",
+  "https://find.helios.lappom.fr",
 ];
 
 export function getAllowedOrigins(): string[] {

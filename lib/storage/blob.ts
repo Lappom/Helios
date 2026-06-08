@@ -111,6 +111,24 @@ export async function putAssessmentPhoto(
   return { pathname };
 }
 
+export async function putCoachProfilePhoto(
+  file: File,
+  organizationId: string,
+  profileId: string,
+): Promise<{ url: string; pathname: string }> {
+  assertAssessmentPhotoUploadAllowed(file);
+  const extension = PHOTO_MIME_TO_EXTENSION[file.type] ?? "jpg";
+  const pathname = `coach-profiles/${organizationId}/${profileId}.${extension}`;
+
+  const blob = await put(pathname, file, {
+    access: "public",
+    addRandomSuffix: false,
+    contentType: file.type,
+  });
+
+  return { url: blob.url, pathname: blob.pathname };
+}
+
 export async function getAssessmentPhotoBlob(pathname: string) {
   return get(pathname, { access: "private" });
 }

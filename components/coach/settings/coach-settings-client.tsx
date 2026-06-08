@@ -56,8 +56,23 @@ export function CoachSettingsClient({
 
       <section className="space-y-4">
         <h2 className="text-title-md text-on-dark font-semibold">
-          Feedback séance
+          Profil public
         </h2>
+        <div className="border-hairline bg-surface-card rounded-lg border p-6">
+          <p className="text-body-sm text-muted">
+            Bio, photo, prestations et visibilité dans l&apos;annuaire Helios.
+          </p>
+          <Button
+            asChild
+            variant="outline"
+            className="border-hairline-strong text-on-dark hover:bg-surface-elevated mt-4 font-semibold"
+          >
+            <Link href="/coach/settings/profile">Éditer mon profil</Link>
+          </Button>
+        </div>
+      </section>
+
+      <section className="space-y-4">
         <div className="border-hairline bg-surface-card rounded-lg border p-6">
           <p className="text-body-sm text-muted">
             Personnalisez les questions posées à vos clients après chaque

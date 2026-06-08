@@ -2,6 +2,7 @@ import {
   clerkMiddleware,
   createRouteMatcher,
 } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -11,6 +12,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/health",
   "/api/webhooks(.*)",
+  "/api/v1/public(.*)",
   "/_design",
   "/design(.*)",
 ]);
@@ -19,7 +21,38 @@ const isCoachRoute = createRouteMatcher(["/coach(.*)"]);
 const isClientRoute = createRouteMatcher(["/client(.*)"]);
 const isApiV1Route = createRouteMatcher(["/api/v1(.*)"]);
 
+function rewriteFindSubdomain(req: Request): NextResponse | null {
+  const host = req.headers.get("host") ?? "";
+  if (!host.startsWith("find.")) {
+    return null;
+  }
+
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+
+  if (pathname.startsWith("/find") || pathname.startsWith("/api")) {
+    return null;
+  }
+
+  if (pathname === "/" || pathname === "") {
+    url.pathname = "/find/coaches";
+    return NextResponse.rewrite(url);
+  }
+
+  if (pathname.startsWith("/coaches")) {
+    url.pathname = `/find${pathname}`;
+    return NextResponse.rewrite(url);
+  }
+
+  return null;
+}
+
 export default clerkMiddleware(async (auth, req) => {
+  const findRewrite = rewriteFindSubdomain(req);
+  if (findRewrite) {
+    return findRewrite;
+  }
+
   if (isPublicRoute(req)) {
     return;
   }
