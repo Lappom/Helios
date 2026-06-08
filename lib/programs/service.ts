@@ -242,12 +242,12 @@ export async function listPrograms(
         updatedAt: programs.updatedAt,
         weekCount: sql<number>`(
           select count(*)::int from program_weeks pw
-          where pw.program_id = ${programs.id}
+          where pw.program_id = "programs"."id"
         )`,
         sessionCount: sql<number>`(
           select count(*)::int from program_sessions ps
           inner join program_weeks pw on ps.program_week_id = pw.id
-          where pw.program_id = ${programs.id}
+          where pw.program_id = "programs"."id"
         )`,
       })
       .from(programs)

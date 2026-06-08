@@ -29,12 +29,14 @@ import {
   programWeeks,
   setPrescriptions,
 } from "./programs";
+import { sessionLogs, setLogs } from "./session-logs";
 
 export * from "./enums";
 export * from "./organization";
 export * from "./clients";
 export * from "./exercises";
 export * from "./programs";
+export * from "./session-logs";
 
 export const organizationsRelations = relations(
   organizations,
@@ -68,6 +70,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   tagAssignments: many(clientTagAssignments),
   statusEvents: many(clientStatusEvents),
   programAssignments: many(programAssignments),
+  sessionLogs: many(sessionLogs),
 }));
 
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
@@ -236,6 +239,7 @@ export const programSessionsRelations = relations(
     }),
     blocks: many(exerciseBlocks),
     scheduleOverrides: many(assignmentSessionOverrides),
+    sessionLogs: many(sessionLogs),
   }),
 );
 
@@ -322,8 +326,52 @@ export const programAssignmentsRelations = relations(
       references: [clients.id],
     }),
     sessionOverrides: many(assignmentSessionOverrides),
+    sessionLogs: many(sessionLogs),
   }),
 );
+
+export const sessionLogsRelations = relations(sessionLogs, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [sessionLogs.organizationId],
+    references: [organizations.id],
+  }),
+  client: one(clients, {
+    fields: [sessionLogs.clientId],
+    references: [clients.id],
+  }),
+  assignment: one(programAssignments, {
+    fields: [sessionLogs.assignmentId],
+    references: [programAssignments.id],
+  }),
+  programSession: one(programSessions, {
+    fields: [sessionLogs.programSessionId],
+    references: [programSessions.id],
+  }),
+  setLogs: many(setLogs),
+}));
+
+export const setLogsRelations = relations(setLogs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [setLogs.organizationId],
+    references: [organizations.id],
+  }),
+  sessionLog: one(sessionLogs, {
+    fields: [setLogs.sessionLogId],
+    references: [sessionLogs.id],
+  }),
+  blockExercise: one(blockExercises, {
+    fields: [setLogs.blockExerciseId],
+    references: [blockExercises.id],
+  }),
+  setPrescription: one(setPrescriptions, {
+    fields: [setLogs.setPrescriptionId],
+    references: [setPrescriptions.id],
+  }),
+  exercise: one(exercises, {
+    fields: [setLogs.exerciseId],
+    references: [exercises.id],
+  }),
+}));
 
 export const assignmentSessionOverridesRelations = relations(
   assignmentSessionOverrides,

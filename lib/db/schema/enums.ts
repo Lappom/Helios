@@ -61,3 +61,9 @@ export const programAssignmentStatusEnum = pgEnum("program_assignment_status", [
   "paused",
   "cancelled",
 ]);
+
+export const sessionLogStatusEnum = pgEnum("session_log_status", [
+  "in_progress",
+  "completed",
+  "abandoned",
+]);

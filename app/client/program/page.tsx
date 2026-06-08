@@ -1,5 +1,5 @@
-import { ClientPlaceholderPage } from "@/components/client/placeholder-page";
+import { ClientProgramCalendar } from "@/components/client/program/client-program-calendar";
 
 export default function ClientProgramPage() {
-  return <ClientPlaceholderPage title="Programme" />;
+  return <ClientProgramCalendar />;
 }
