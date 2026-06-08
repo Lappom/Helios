@@ -8,7 +8,12 @@ import {
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { createId } from "../id";
-import { blockTypeEnum, programStatusEnum } from "./enums";
+import {
+  blockTypeEnum,
+  programAssignmentStatusEnum,
+  programStatusEnum,
+} from "./enums";
+import { clients } from "./clients";
 import { exercises } from "./exercises";
 import { organizations } from "./organization";
 
@@ -206,6 +211,79 @@ export const blockExerciseAlternatives = pgTable(
     uniqueIndex("block_exercise_alts_block_exercise_unique_idx").on(
       t.blockExerciseId,
       t.exerciseId,
+    ),
+  ],
+);
+
+export const programAssignments = pgTable(
+  "program_assignments",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    programId: text("program_id")
+      .notNull()
+      .references(() => programs.id, { onDelete: "cascade" }),
+    clientId: text("client_id")
+      .notNull()
+      .references(() => clients.id, { onDelete: "cascade" }),
+    coachClerkUserId: text("coach_clerk_user_id").notNull(),
+    startDate: timestamp("start_date", { withTimezone: true }).notNull(),
+    endDate: timestamp("end_date", { withTimezone: true }),
+    status: programAssignmentStatusEnum("status").notNull().default("active"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("program_assignments_org_program_idx").on(
+      t.organizationId,
+      t.programId,
+    ),
+    index("program_assignments_org_client_status_idx").on(
+      t.organizationId,
+      t.clientId,
+      t.status,
+    ),
+  ],
+);
+
+export const assignmentSessionOverrides = pgTable(
+  "assignment_session_overrides",
+  {
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organizations.id, { onDelete: "cascade" }),
+    assignmentId: text("assignment_id")
+      .notNull()
+      .references(() => programAssignments.id, { onDelete: "cascade" }),
+    programSessionId: text("program_session_id")
+      .notNull()
+      .references(() => programSessions.id, { onDelete: "cascade" }),
+    scheduledDate: timestamp("scheduled_date", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    index("assignment_session_overrides_assignment_idx").on(t.assignmentId),
+    uniqueIndex("assignment_session_overrides_unique_idx").on(
+      t.assignmentId,
+      t.programSessionId,
     ),
   ],
 );

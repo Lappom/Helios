@@ -82,3 +82,36 @@ export type ProgramTree = {
   updatedAt: Date;
   weeks: ProgramWeekItem[];
 };
+
+export type ProgramAssignmentStatus =
+  | "active"
+  | "completed"
+  | "paused"
+  | "cancelled";
+
+export type ProgramAssignmentItem = {
+  id: string;
+  programId: string;
+  clientId: string;
+  coachClerkUserId: string;
+  startDate: Date;
+  endDate: Date | null;
+  status: ProgramAssignmentStatus;
+  createdAt: Date;
+  updatedAt: Date;
+  programName?: string;
+  clientFirstName?: string;
+  clientLastName?: string;
+  clientEmail?: string;
+};
+
+export type ProgramAssignmentWithProgram = ProgramAssignmentItem & {
+  program: {
+    id: string;
+    name: string;
+    description: string | null;
+    status: ProgramStatus;
+  };
+};
+
+export type { ScheduledSession } from "./schedule";

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { AssignProgramDialog } from "@/components/coach/programs/assign-program-dialog";
 import { ProgramStatusBadge } from "@/components/coach/programs/program-status-badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,7 @@ export function ProgramPublishBar({
   saving,
 }: ProgramPublishBarProps) {
   const [confirmUnpublish, setConfirmUnpublish] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const isLocked = program.status === "published";
 
@@ -125,14 +127,32 @@ export function ProgramPublishBar({
               Publier
             </Button>
           ) : program.status === "published" ? (
-            <Button
-              variant="outline"
-              className="border-hairline"
-              disabled={loading}
-              onClick={() => setConfirmUnpublish(true)}
-            >
-              Repasser en brouillon
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                className="border-hairline"
+                asChild
+              >
+                <Link href={`/coach/programs/${program.id}/calendar`}>
+                  Calendrier
+                </Link>
+              </Button>
+              <Button
+                className="bg-primary text-on-primary hover:bg-primary-active font-semibold"
+                disabled={loading}
+                onClick={() => setAssignOpen(true)}
+              >
+                Assigner
+              </Button>
+              <Button
+                variant="outline"
+                className="border-hairline"
+                disabled={loading}
+                onClick={() => setConfirmUnpublish(true)}
+              >
+                Repasser en brouillon
+              </Button>
+            </>
           ) : null}
         </div>
       </div>
@@ -166,6 +186,13 @@ export function ProgramPublishBar({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AssignProgramDialog
+        programId={program.id}
+        programName={program.name}
+        open={assignOpen}
+        onOpenChange={setAssignOpen}
+      />
     </>
   );
 }

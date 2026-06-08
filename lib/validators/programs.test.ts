@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  assignProgramSchema,
   createBlockSchema,
   createProgramSchema,
   patchBlockExerciseSchema,
@@ -41,6 +42,14 @@ describe("programs validators", () => {
 
   it("validates reorder ids", () => {
     const result = reorderSchema.safeParse({ ids: ["a", "b"] });
+    expect(result.success).toBe(true);
+  });
+
+  it("validates assign program payload", () => {
+    const result = assignProgramSchema.safeParse({
+      clientIds: ["client_1"],
+      startDate: "2026-06-10",
+    });
     expect(result.success).toBe(true);
   });
 });

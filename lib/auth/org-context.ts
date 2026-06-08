@@ -1,7 +1,8 @@
 import { auth } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { clients, organizations, teamMembers } from "@/lib/db/schema";
+import { clients, teamMembers } from "@/lib/db/schema";
+import { ensureOrganizationSynced } from "@/lib/db/sync/clerk";
 import {
   mapTeamMemberRoleToOrgRole,
   mapClerkRoleToTeamMemberRole,
@@ -17,13 +18,7 @@ export async function getOrgContext(): Promise<OrgContext | null> {
     return null;
   }
 
-  const organization = await db.query.organizations.findFirst({
-    where: eq(organizations.clerkOrgId, orgId),
-    columns: {
-      id: true,
-      planTier: true,
-    },
-  });
+  const organization = await ensureOrganizationSynced(orgId);
 
   if (!organization) {
     return null;

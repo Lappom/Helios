@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Copy, Pencil } from "lucide-react";
+import { Copy, Pencil, UserPlus } from "lucide-react";
 import { toast } from "sonner";
+import { AssignProgramDialog } from "@/components/coach/programs/assign-program-dialog";
 import { CreateProgramDialog } from "@/components/coach/programs/create-program-dialog";
 import { ProgramStatusBadge } from "@/components/coach/programs/program-status-badge";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,9 @@ export function ProgramsPageClient({
     "all",
   );
   const [search, setSearch] = useState("");
+  const [assignProgram, setAssignProgram] = useState<ProgramListItem | null>(
+    null,
+  );
 
   const filtered = useMemo(() => {
     return programs.filter((program) => {
@@ -205,6 +209,17 @@ export function ProgramsPageClient({
                         <Copy className="size-3.5" />
                         Dupliquer
                       </Button>
+                      {program.status === "published" ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="border-hairline"
+                          onClick={() => setAssignProgram(program)}
+                        >
+                          <UserPlus className="size-3.5" />
+                          Assigner
+                        </Button>
+                      ) : null}
                       {program.status !== "archived" ? (
                         <Button
                           variant="outline"
@@ -223,6 +238,18 @@ export function ProgramsPageClient({
           </Table>
         </div>
       )}
+      {assignProgram ? (
+        <AssignProgramDialog
+          programId={assignProgram.id}
+          programName={assignProgram.name}
+          open={Boolean(assignProgram)}
+          onOpenChange={(open) => {
+            if (!open) {
+              setAssignProgram(null);
+            }
+          }}
+        />
+      ) : null}
     </div>
   );
 }

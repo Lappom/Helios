@@ -1,4 +1,9 @@
-import type { ProgramTree } from "./types";
+import type {
+  ProgramAssignmentItem,
+  ProgramAssignmentWithProgram,
+  ProgramTree,
+  ScheduledSession,
+} from "./types";
 
 async function parseResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -231,4 +236,72 @@ export async function deleteBlockExerciseRequest(
     { method: "DELETE" },
   );
   return parseResponse<ProgramTree>(response);
+}
+
+export type AssignProgramResult = {
+  created: ProgramAssignmentItem[];
+  skipped: { clientId: string; reason: string }[];
+};
+
+export async function assignProgramRequest(
+  programId: string,
+  input: { clientIds: string[]; startDate: string },
+): Promise<AssignProgramResult> {
+  const response = await fetch(`/api/v1/programs/${programId}/assign`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  return parseResponse<AssignProgramResult>(response);
+}
+
+export async function fetchClientPrograms(
+  clientId: string,
+): Promise<ProgramAssignmentWithProgram[]> {
+  const response = await fetch(`/api/v1/clients/${clientId}/programs`);
+  return parseResponse<ProgramAssignmentWithProgram[]>(response);
+}
+
+export async function fetchActiveClientProgram(
+  clientId: string,
+): Promise<ProgramAssignmentWithProgram> {
+  const response = await fetch(`/api/v1/clients/${clientId}/programs/active`);
+  return parseResponse<ProgramAssignmentWithProgram>(response);
+}
+
+export type AssignmentScheduleResponse = {
+  assignment: ProgramAssignmentItem;
+  sessions: ScheduledSession[];
+};
+
+export async function fetchAssignmentSchedule(
+  assignmentId: string,
+  range?: { start: string; end: string },
+): Promise<AssignmentScheduleResponse> {
+  const params = new URLSearchParams();
+  if (range) {
+    params.set("start", range.start);
+    params.set("end", range.end);
+  }
+  const query = params.toString();
+  const response = await fetch(
+    `/api/v1/assignments/${assignmentId}/schedule${query ? `?${query}` : ""}`,
+  );
+  return parseResponse<AssignmentScheduleResponse>(response);
+}
+
+export async function patchSessionScheduleRequest(
+  assignmentId: string,
+  sessionId: string,
+  scheduledDate: string,
+): Promise<AssignmentScheduleResponse> {
+  const response = await fetch(
+    `/api/v1/assignments/${assignmentId}/sessions/${sessionId}/schedule`,
+    {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ scheduledDate }),
+    },
+  );
+  return parseResponse<AssignmentScheduleResponse>(response);
 }

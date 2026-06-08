@@ -19,9 +19,11 @@ import {
   teamMembers,
 } from "./organization";
 import {
+  assignmentSessionOverrides,
   blockExerciseAlternatives,
   blockExercises,
   exerciseBlocks,
+  programAssignments,
   programSessions,
   programs,
   programWeeks,
@@ -65,6 +67,7 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   notes: many(clientNotes),
   tagAssignments: many(clientTagAssignments),
   statusEvents: many(clientStatusEvents),
+  programAssignments: many(programAssignments),
 }));
 
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
@@ -202,6 +205,7 @@ export const programsRelations = relations(programs, ({ one, many }) => ({
     relationName: "programClones",
   }),
   weeks: many(programWeeks),
+  assignments: many(programAssignments),
 }));
 
 export const programWeeksRelations = relations(
@@ -231,6 +235,7 @@ export const programSessionsRelations = relations(
       references: [programWeeks.id],
     }),
     blocks: many(exerciseBlocks),
+    scheduleOverrides: many(assignmentSessionOverrides),
   }),
 );
 
@@ -297,6 +302,43 @@ export const setPrescriptionsRelations = relations(
     blockExercise: one(blockExercises, {
       fields: [setPrescriptions.blockExerciseId],
       references: [blockExercises.id],
+    }),
+  }),
+);
+
+export const programAssignmentsRelations = relations(
+  programAssignments,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [programAssignments.organizationId],
+      references: [organizations.id],
+    }),
+    program: one(programs, {
+      fields: [programAssignments.programId],
+      references: [programs.id],
+    }),
+    client: one(clients, {
+      fields: [programAssignments.clientId],
+      references: [clients.id],
+    }),
+    sessionOverrides: many(assignmentSessionOverrides),
+  }),
+);
+
+export const assignmentSessionOverridesRelations = relations(
+  assignmentSessionOverrides,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [assignmentSessionOverrides.organizationId],
+      references: [organizations.id],
+    }),
+    assignment: one(programAssignments, {
+      fields: [assignmentSessionOverrides.assignmentId],
+      references: [programAssignments.id],
+    }),
+    programSession: one(programSessions, {
+      fields: [assignmentSessionOverrides.programSessionId],
+      references: [programSessions.id],
     }),
   }),
 );

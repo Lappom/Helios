@@ -122,6 +122,15 @@ export const addBlockExerciseSchema = z.object({
   exerciseId: z.string().min(1),
 });
 
+export const assignProgramSchema = z.object({
+  clientIds: z.array(z.string().min(1)).min(1).max(50),
+  startDate: z.coerce.date(),
+});
+
+export const patchAssignmentScheduleSchema = z.object({
+  scheduledDate: z.coerce.date(),
+});
+
 export type CreateProgramInput = z.infer<typeof createProgramSchema>;
 export type PatchProgramInput = z.infer<typeof patchProgramSchema>;
 export type CreateWeekInput = z.infer<typeof createWeekSchema>;
@@ -132,6 +141,10 @@ export type CreateBlockInput = z.infer<typeof createBlockSchema>;
 export type PatchBlockInput = z.infer<typeof patchBlockSchema>;
 export type PatchBlockExerciseInput = z.infer<typeof patchBlockExerciseSchema>;
 export type SetPrescriptionInput = z.infer<typeof setPrescriptionSchema>;
+export type AssignProgramInput = z.infer<typeof assignProgramSchema>;
+export type PatchAssignmentScheduleInput = z.infer<
+  typeof patchAssignmentScheduleSchema
+>;
 
 export function parseListProgramsQuery(
   searchParams: URLSearchParams,

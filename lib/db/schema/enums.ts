@@ -54,3 +54,10 @@ export const blockTypeEnum = pgEnum("block_type", [
   "circuit",
   "amrap",
 ]);
+
+export const programAssignmentStatusEnum = pgEnum("program_assignment_status", [
+  "active",
+  "completed",
+  "paused",
+  "cancelled",
+]);

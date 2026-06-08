@@ -1,3 +1,4 @@
+import { clerkClient } from "@clerk/nextjs/server";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -20,6 +21,46 @@ function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setDate(result.getDate() + days);
   return result;
+}
+
+export async function ensureOrganizationSynced(clerkOrgId: string): Promise<{
+  id: string;
+  planTier: (typeof organizations.$inferSelect)["planTier"];
+} | null> {
+  const existing = await db.query.organizations.findFirst({
+    where: eq(organizations.clerkOrgId, clerkOrgId),
+    columns: { id: true, planTier: true },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
+  try {
+    const clerk = await clerkClient();
+    const clerkOrg = await clerk.organizations.getOrganization({
+      organizationId: clerkOrgId,
+    });
+
+    await handleOrganizationCreated({
+      id: clerkOrg.id,
+      name: clerkOrg.name,
+      slug: clerkOrg.slug ?? clerkOrg.id,
+    });
+
+    return (
+      (await db.query.organizations.findFirst({
+        where: eq(organizations.clerkOrgId, clerkOrgId),
+        columns: { id: true, planTier: true },
+      })) ?? null
+    );
+  } catch (error) {
+    logger.warn("Failed to sync organization from Clerk", {
+      clerkOrgId,
+      error: error instanceof Error ? error.message : "unknown",
+    });
+    return null;
+  }
 }
 
 export async function handleOrganizationCreated(data: {
