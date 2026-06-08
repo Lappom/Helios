@@ -16,10 +16,48 @@ export function ClientActiveAssessmentsCard({
   clientId,
   clientName,
 }: ClientActiveAssessmentsCardProps) {
+  return (
+    <ClientActiveAssessmentsCardContent
+      key={clientId}
+      clientId={clientId}
+      clientName={clientName}
+    />
+  );
+}
+
+function ClientActiveAssessmentsCardContent({
+  clientId,
+  clientName,
+}: ClientActiveAssessmentsCardProps) {
   const [items, setItems] = useState<AssessmentListItem[]>([]);
   const [assignOpen, setAssignOpen] = useState(false);
 
-  async function load() {
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const search = new URLSearchParams({
+        limit: "10",
+        clientId,
+      });
+      const response = await fetch(`/api/v1/assessments?${search.toString()}`);
+      if (!response.ok || cancelled) {
+        return;
+      }
+      const payload = (await response.json()) as {
+        items: AssessmentListItem[];
+      };
+      if (!cancelled) {
+        setItems(payload.items.slice(0, 3));
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId]);
+
+  async function reload() {
     const search = new URLSearchParams({
       limit: "10",
       clientId,
@@ -31,10 +69,6 @@ export function ClientActiveAssessmentsCard({
     const payload = (await response.json()) as { items: AssessmentListItem[] };
     setItems(payload.items.slice(0, 3));
   }
-
-  useEffect(() => {
-    void load();
-  }, [clientId]);
 
   const latest = items[0];
 
@@ -82,7 +116,7 @@ export function ClientActiveAssessmentsCard({
         clientName={clientName}
         open={assignOpen}
         onOpenChange={setAssignOpen}
-        onAssigned={load}
+        onAssigned={reload}
       />
     </>
   );

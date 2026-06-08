@@ -11,7 +11,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AssignProgramDialog } from "@/components/coach/programs/assign-program-dialog";
 import { ProgramCalendarGrid } from "@/components/coach/programs/program-calendar-grid";
@@ -66,7 +66,9 @@ export function ProgramCalendarClient({
     return today;
   });
   const [sessions, setSessions] = useState<ScheduledSession[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(
+    Boolean(initialAssignments[0]?.id),
+  );
   const [assignOpen, setAssignOpen] = useState(false);
   const [activeSession, setActiveSession] = useState<ScheduledSession | null>(
     null,
@@ -94,9 +96,8 @@ export function ProgramCalendarClient({
     return { start, end };
   }, [days]);
 
-  const loadSchedule = useCallback(async () => {
+  async function reloadSchedule() {
     if (!selectedAssignmentId) {
-      setSessions([]);
       return;
     }
 
@@ -115,13 +116,46 @@ export function ProgramCalendarClient({
     } finally {
       setLoading(false);
     }
-  }, [range.end, range.start, selectedAssignmentId]);
+  }
 
   useEffect(() => {
-    void loadSchedule();
-  }, [loadSchedule]);
+    if (!selectedAssignmentId) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const payload = await fetchAssignmentSchedule(selectedAssignmentId, {
+          start: range.start.toISOString(),
+          end: range.end.toISOString(),
+        });
+        if (!cancelled) {
+          setSessions(payload.sessions);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(
+            error instanceof Error ? error.message : "Calendrier indisponible.",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [range.end, range.start, selectedAssignmentId]);
+
+  const calendarSessions = selectedAssignmentId ? sessions : [];
 
   function shiftAnchor(delta: number) {
+    setLoading(true);
     setAnchorDate((current) => {
       if (view === "week") {
         return addDays(current, delta * 7);
@@ -169,7 +203,7 @@ export function ProgramCalendarClient({
       toast.error(
         error instanceof Error ? error.message : "Replanification impossible.",
       );
-      void loadSchedule();
+      void reloadSchedule();
     }
   }
 
@@ -221,7 +255,10 @@ export function ProgramCalendarClient({
           {assignments.length > 0 ? (
             <Select
               value={selectedAssignmentId}
-              onValueChange={setSelectedAssignmentId}
+              onValueChange={(value) => {
+                setLoading(true);
+                setSelectedAssignmentId(value);
+              }}
             >
               <SelectTrigger className="border-hairline bg-surface-elevated w-full max-w-xs">
                 <SelectValue placeholder="Choisir un client" />
@@ -252,7 +289,10 @@ export function ProgramCalendarClient({
 
         <Tabs
           value={view}
-          onValueChange={(value) => setView(value as "week" | "month")}
+          onValueChange={(value) => {
+            setLoading(true);
+            setView(value as "week" | "month");
+          }}
         >
           <TabsList className="border-hairline bg-surface-elevated">
             <TabsTrigger value="week">Semaine</TabsTrigger>
@@ -301,7 +341,7 @@ export function ProgramCalendarClient({
             view={view}
             anchorDate={anchorDate}
             days={days}
-            sessions={sessions}
+            sessions={calendarSessions}
           />
           <DragOverlay>
             {activeSession ? (

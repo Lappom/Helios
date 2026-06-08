@@ -2,7 +2,10 @@ import { and, eq, gte, inArray } from "drizzle-orm";
 import { TZDate } from "@date-fns/tz";
 import { addHours, addMinutes, endOfDay, startOfDay } from "date-fns";
 import { db } from "@/lib/db";
-import { bookings } from "@/lib/db/schema";
+import { bookings, clients } from "@/lib/db/schema";
+import { getOrganizationPlanTier } from "@/lib/notifications/cron";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
+import { getActiveEventTemplate } from "@/lib/notifications/service";
 
 export type BookingReminderPayload = {
   eventType: "booking_reminder";
@@ -19,9 +22,59 @@ export type BookingReminderPayload = {
 export async function enqueueNotification(
   payload: BookingReminderPayload,
 ): Promise<void> {
-  if (process.env.NODE_ENV !== "production") {
-    console.info("[bookings] notification stub", payload);
+  const template = await getActiveEventTemplate(
+    payload.organizationId,
+    "booking_reminder",
+    "email",
+  );
+
+  if (!template) {
+    return;
   }
+
+  const recipients: { clientId?: string; email?: string }[] = [];
+
+  if (payload.clientId) {
+    const client = await db.query.clients.findFirst({
+      where: and(
+        eq(clients.organizationId, payload.organizationId),
+        eq(clients.id, payload.clientId),
+      ),
+      columns: { id: true, email: true },
+    });
+    if (client) {
+      recipients.push({ clientId: client.id, email: client.email });
+    }
+  } else if (payload.prospectEmail) {
+    recipients.push({ email: payload.prospectEmail });
+  }
+
+  if (recipients.length === 0) {
+    return;
+  }
+
+  const planTier = await getOrganizationPlanTier(payload.organizationId);
+  const startAt = new Date(payload.startAt);
+
+  await dispatchNotification({
+    organizationId: payload.organizationId,
+    planTier,
+    channel: template.channel,
+    subject: template.subject ?? undefined,
+    content: template.content,
+    templateId: template.id,
+    eventType: "booking_reminder",
+    recipients,
+    metadata: {
+      bookingTime: startAt.toLocaleString("fr-FR", {
+        timeZone: "Europe/Paris",
+      }),
+      url: "/client/bookings",
+      variant: payload.variant,
+      bookingId: payload.bookingId,
+    },
+    idempotencyKey: `booking_reminder:${payload.variant}:${payload.bookingId}`,
+  });
 }
 
 export async function processBookingReminders(now: Date = new Date()): Promise<{

@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { MacroRingsPanel } from "@/components/client/nutrition/macro-ring";
 import { MealLogDialog } from "@/components/client/nutrition/meal-log-dialog";
 import { PlannedMealsList } from "@/components/client/nutrition/planned-meals-list";
@@ -25,7 +25,32 @@ export function ClientNutritionDashboard() {
   const [logMealId, setLogMealId] = useState<string | null>(null);
   const [logMealName, setLogMealName] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const data = await fetchMyNutrition(formatDayKey(anchorDate));
+        if (!cancelled) {
+          setPayload(data);
+        }
+      } catch {
+        if (!cancelled) {
+          setPayload(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [anchorDate]);
+
+  async function reloadData() {
     setLoading(true);
     try {
       const data = await fetchMyNutrition(formatDayKey(anchorDate));
@@ -35,13 +60,10 @@ export function ClientNutritionDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [anchorDate]);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
+  }
 
   function shiftDay(delta: number) {
+    setLoading(true);
     setAnchorDate((current) => {
       const next = new Date(current);
       next.setDate(next.getDate() + delta);
@@ -163,7 +185,7 @@ export function ClientNutritionDashboard() {
         date={formatDayKey(anchorDate)}
         mealId={logMealId}
         mealName={logMealName}
-        onLogged={() => void loadData()}
+        onLogged={() => void reloadData()}
       />
     </div>
   );

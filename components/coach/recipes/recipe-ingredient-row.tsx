@@ -41,12 +41,14 @@ export function RecipeIngredientRow({
   const [results, setResults] = useState<FoodListItem[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [prevFoodName, setPrevFoodName] = useState(row.foodName);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  if (row.foodName !== prevFoodName) {
+    setPrevFoodName(row.foodName);
     setQuery(row.foodName);
-  }, [row.foodName]);
+  }
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

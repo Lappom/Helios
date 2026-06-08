@@ -1,7 +1,9 @@
 export type HeliosEventName =
   | "client.created"
   | "assessment.submitted"
-  | "payment.received";
+  | "payment.received"
+  | "program.published"
+  | "message.new";
 
 export type ClientCreatedPayload = {
   organizationId: string;
@@ -19,6 +21,20 @@ export type PaymentReceivedPayload = {
   source: "manual" | "booking" | "import";
 };
 
+export type ProgramPublishedPayload = {
+  organizationId: string;
+  programId: string;
+  clientId: string;
+  assignmentId: string;
+};
+
+export type MessageNewPayload = {
+  organizationId: string;
+  conversationId: string;
+  clientId: string;
+  senderClerkUserId: string;
+};
+
 export type HeliosEventPayload = {
   "client.created": ClientCreatedPayload;
   "assessment.submitted": {
@@ -27,6 +43,8 @@ export type HeliosEventPayload = {
     clientId: string;
   };
   "payment.received": PaymentReceivedPayload;
+  "program.published": ProgramPublishedPayload;
+  "message.new": MessageNewPayload;
 };
 
 export function emitHeliosEvent<T extends HeliosEventName>(
@@ -36,4 +54,10 @@ export function emitHeliosEvent<T extends HeliosEventName>(
   if (process.env.NODE_ENV === "development") {
     console.info(`[helios:event] ${name}`, payload);
   }
+
+  void import("@/lib/notifications/listeners").then(({ handleHeliosNotificationEvent }) =>
+    handleHeliosNotificationEvent(name, payload).catch((error) => {
+      console.error(`[helios:event] notification listener failed for ${name}`, error);
+    }),
+  );
 }

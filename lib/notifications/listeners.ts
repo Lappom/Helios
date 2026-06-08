@@ -1,0 +1,165 @@
+import { and, eq, inArray } from "drizzle-orm";
+import { clerkClient } from "@clerk/nextjs/server";
+import { db } from "@/lib/db";
+import { clients, programs, teamMembers } from "@/lib/db/schema";
+import type {
+  HeliosEventName,
+  HeliosEventPayload,
+  PaymentReceivedPayload,
+} from "@/lib/events/emit";
+import { getOrganizationPlanTier } from "./cron";
+import { dispatchNotification } from "./dispatch";
+import { getActiveEventTemplate } from "./service";
+
+async function dispatchEventNotification(
+  organizationId: string,
+  eventType: Parameters<typeof getActiveEventTemplate>[1],
+  recipients: {
+    clientId?: string;
+    email?: string;
+    clerkUserId?: string;
+  }[],
+  metadata?: Record<string, unknown>,
+  idempotencyKey?: string,
+) {
+  const template = await getActiveEventTemplate(organizationId, eventType);
+  if (!template || recipients.length === 0) {
+    return;
+  }
+
+  const planTier = await getOrganizationPlanTier(organizationId);
+
+  await dispatchNotification({
+    organizationId,
+    planTier,
+    channel: template.channel,
+    subject: template.subject ?? undefined,
+    content: template.content,
+    templateId: template.id,
+    eventType,
+    recipients,
+    metadata,
+    idempotencyKey,
+  });
+}
+
+async function getCoachRecipientEmails(
+  organizationId: string,
+): Promise<{ email: string; clerkUserId: string }[]> {
+  const members = await db.query.teamMembers.findMany({
+    where: and(
+      eq(teamMembers.organizationId, organizationId),
+      inArray(teamMembers.role, ["owner", "admin", "coach"]),
+    ),
+    columns: { clerkUserId: true },
+  });
+
+  const clerk = await clerkClient();
+  const recipients: { email: string; clerkUserId: string }[] = [];
+
+  for (const member of members) {
+    try {
+      const user = await clerk.users.getUser(member.clerkUserId);
+      const email = user.emailAddresses[0]?.emailAddress;
+      if (email) {
+        recipients.push({ email, clerkUserId: member.clerkUserId });
+      }
+    } catch {
+      // Skip members that cannot be resolved.
+    }
+  }
+
+  return recipients;
+}
+
+export async function handleHeliosNotificationEvent<
+  T extends HeliosEventName,
+>(name: T, payload: HeliosEventPayload[T]): Promise<void> {
+  switch (name) {
+    case "payment.received": {
+      const paymentPayload = payload as PaymentReceivedPayload;
+      const coaches = await getCoachRecipientEmails(
+        paymentPayload.organizationId,
+      );
+      await dispatchEventNotification(
+        paymentPayload.organizationId,
+        "payment_received",
+        coaches.map((coach) => ({
+          email: coach.email,
+          clerkUserId: coach.clerkUserId,
+        })),
+        {
+          amount: `${(paymentPayload.amountCents / 100).toFixed(2)} €`,
+        },
+        `payment.received:${paymentPayload.paymentId}`,
+      );
+      return;
+    }
+    case "assessment.submitted": {
+      const assessmentPayload = payload as HeliosEventPayload["assessment.submitted"];
+      const coaches = await getCoachRecipientEmails(
+        assessmentPayload.organizationId,
+      );
+      if (coaches.length === 0) {
+        return;
+      }
+      const planTier = await getOrganizationPlanTier(
+        assessmentPayload.organizationId,
+      );
+      await dispatchNotification({
+        organizationId: assessmentPayload.organizationId,
+        planTier,
+        channel: "email",
+        subject: "Bilan soumis par un client",
+        content:
+          "Un client vient de soumettre un bilan. Consultez-le dans votre espace coach.",
+        recipients: coaches.map((coach) => ({
+          email: coach.email,
+          clerkUserId: coach.clerkUserId,
+        })),
+        metadata: {
+          url: `/coach/assessments/${assessmentPayload.assessmentId}`,
+        },
+        idempotencyKey: `assessment.submitted:${assessmentPayload.assessmentId}`,
+      });
+      return;
+    }
+    case "program.published": {
+      const programPayload = payload as HeliosEventPayload["program.published"];
+      const client = await db.query.clients.findFirst({
+        where: and(
+          eq(clients.organizationId, programPayload.organizationId),
+          eq(clients.id, programPayload.clientId),
+        ),
+        columns: { id: true, email: true },
+      });
+      const program = await db.query.programs.findFirst({
+        where: and(
+          eq(programs.organizationId, programPayload.organizationId),
+          eq(programs.id, programPayload.programId),
+        ),
+        columns: { name: true },
+      });
+
+      if (!client) {
+        return;
+      }
+
+      await dispatchEventNotification(
+        programPayload.organizationId,
+        "program_published",
+        [{ clientId: client.id, email: client.email }],
+        {
+          programName: program?.name ?? "Programme",
+          url: "/client/program",
+        },
+        `program.published:${programPayload.assignmentId}`,
+      );
+      return;
+    }
+    case "message.new":
+      return;
+    default:
+      return;
+  }
+}

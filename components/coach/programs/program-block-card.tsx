@@ -170,10 +170,14 @@ function BlockExerciseEditor({
   ) => Promise<void>;
 }) {
   const [prescriptions, setPrescriptions] = useState(blockExercise.prescriptions);
+  const [prevPrescriptions, setPrevPrescriptions] = useState(
+    blockExercise.prescriptions,
+  );
 
-  useEffect(() => {
+  if (blockExercise.prescriptions !== prevPrescriptions) {
+    setPrevPrescriptions(blockExercise.prescriptions);
     setPrescriptions(blockExercise.prescriptions);
-  }, [blockExercise.prescriptions]);
+  }
 
   return (
     <div className="border-hairline bg-surface-elevated rounded-md border p-3">

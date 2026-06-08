@@ -65,7 +65,7 @@ export function CheckoutFlowClient({
     startOfWeekMonday(new Date()),
   );
   const [slots, setSlots] = useState<BookingSlotDto[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [loadingSlots, setLoadingSlots] = useState(needsSlot);
   const [selectedSlot, setSelectedSlot] = useState<BookingSlotDto | null>(null);
   const [prospectName, setProspectName] = useState("");
   const [prospectEmail, setProspectEmail] = useState("");
@@ -95,7 +95,6 @@ export function CheckoutFlowClient({
 
   const loadSlots = useCallback(async () => {
     if (!needsSlot) return;
-    setLoadingSlots(true);
     try {
       const from = formatDayKey(weekDays[0]!);
       const to = formatDayKey(weekDays[6]!);
@@ -113,17 +112,48 @@ export function CheckoutFlowClient({
   }, [needsSlot, service.id, weekDays]);
 
   useEffect(() => {
-    void loadSlots();
-  }, [loadSlots]);
-
-  useEffect(() => {
-    if (user) {
-      setProspectEmail(user.primaryEmailAddress?.emailAddress ?? "");
-      setProspectName(
-        [user.firstName, user.lastName].filter(Boolean).join(" ") || "",
-      );
+    if (!needsSlot) {
+      return;
     }
-  }, [user]);
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const from = formatDayKey(weekDays[0]!);
+        const to = formatDayKey(weekDays[6]!);
+        const data = await fetchAvailableSlots(service.id, from, to);
+        if (!cancelled) {
+          setSlots(data);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : "Impossible de charger les créneaux",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingSlots(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [needsSlot, service.id, weekDays]);
+
+  const [prevUserId, setPrevUserId] = useState<string | null>(null);
+  if (user?.id && user.id !== prevUserId) {
+    setPrevUserId(user.id);
+    setProspectEmail(user.primaryEmailAddress?.emailAddress ?? "");
+    setProspectName(
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || "",
+    );
+  }
 
   async function handleApplyPromo() {
     if (!promoCode.trim()) return;
@@ -184,7 +214,10 @@ export function CheckoutFlowClient({
       toast.error(
         error instanceof Error ? error.message : "Checkout impossible",
       );
-      if (needsSlot) void loadSlots();
+      if (needsSlot) {
+        setLoadingSlots(true);
+        void loadSlots();
+      }
     } finally {
       setSubmitting(false);
     }
@@ -281,7 +314,10 @@ export function CheckoutFlowClient({
                 variant="outline"
                 size="icon"
                 className="border-hairline"
-                onClick={() => setAnchorDate((d) => addDays(d, -7))}
+                onClick={() => {
+                  setLoadingSlots(true);
+                  setAnchorDate((d) => addDays(d, -7));
+                }}
               >
                 <ChevronLeft className="size-4" />
               </Button>
@@ -289,7 +325,10 @@ export function CheckoutFlowClient({
                 variant="outline"
                 size="icon"
                 className="border-hairline"
-                onClick={() => setAnchorDate((d) => addDays(d, 7))}
+                onClick={() => {
+                  setLoadingSlots(true);
+                  setAnchorDate((d) => addDays(d, 7));
+                }}
               >
                 <ChevronRight className="size-4" />
               </Button>

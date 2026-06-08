@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SessionStatusBadge } from "@/components/client/session-status-badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -43,26 +43,35 @@ export function ClientProgramCalendar() {
     return { start, end };
   }, [days]);
 
-  const loadSchedule = useCallback(async () => {
-    setLoading(true);
-    try {
-      const payload = await fetchClientSchedule({
-        start: formatDayKey(range.start),
-        end: formatDayKey(range.end),
-      });
-      setSessions(payload.sessions);
-      setProgramName(payload.assignment.program.name);
-    } catch {
-      setSessions([]);
-      setProgramName("");
-    } finally {
-      setLoading(false);
-    }
-  }, [range.end, range.start]);
-
   useEffect(() => {
-    void loadSchedule();
-  }, [loadSchedule]);
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const payload = await fetchClientSchedule({
+          start: formatDayKey(range.start),
+          end: formatDayKey(range.end),
+        });
+        if (!cancelled) {
+          setSessions(payload.sessions);
+          setProgramName(payload.assignment.program.name);
+        }
+      } catch {
+        if (!cancelled) {
+          setSessions([]);
+          setProgramName("");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [range.end, range.start]);
 
   const sessionsByDay = useMemo(() => {
     const map = new Map<string, EnrichedScheduledSession[]>();
@@ -76,6 +85,7 @@ export function ClientProgramCalendar() {
   }, [sessions]);
 
   function shiftAnchor(delta: number) {
+    setLoading(true);
     setAnchorDate((current) => {
       const next = new Date(current);
       if (view === "week") {
@@ -112,7 +122,10 @@ export function ClientProgramCalendar() {
         </div>
         <Tabs
           value={view}
-          onValueChange={(value) => setView(value as "week" | "month")}
+          onValueChange={(value) => {
+            setLoading(true);
+            setView(value as "week" | "month");
+          }}
         >
           <TabsList>
             <TabsTrigger value="week">Semaine</TabsTrigger>

@@ -85,7 +85,9 @@ export function RecipeEditorClient({ recipe }: RecipeEditorClientProps) {
     recipe ? mapDetailIngredients(recipe) : [createEmptyIngredientRow()],
   );
   const [scaleFactor, setScaleFactor] = useState(1);
-  const [scaledMacros, setScaledMacros] = useState<RecipeMacros | null>(null);
+  const [apiScaledMacros, setApiScaledMacros] = useState<RecipeMacros | null>(
+    null,
+  );
   const [scaleLoading, setScaleLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hydrated, setHydrated] = useState(isNew);
@@ -132,43 +134,17 @@ export function RecipeEditorClient({ recipe }: RecipeEditorClientProps) {
     }
   }, [validIngredients, servings]);
 
-  useEffect(() => {
+  const locallyScaledMacros = useMemo(() => {
     if (scaleFactor === 1) {
-      setScaledMacros(liveMacros?.perServing ?? null);
-      return;
+      return liveMacros?.perServing ?? null;
     }
 
     if (validIngredients.length === 0) {
-      setScaledMacros(null);
-      return;
+      return null;
     }
 
     if (recipe?.id) {
-      if (scaleDebounceRef.current) {
-        clearTimeout(scaleDebounceRef.current);
-      }
-
-      scaleDebounceRef.current = setTimeout(async () => {
-        setScaleLoading(true);
-        try {
-          const response = await fetch(
-            `/api/v1/recipes/${recipe.id}/scale`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ scaleFactor }),
-            },
-          );
-          const payload = await response.json();
-          if (response.ok) {
-            setScaledMacros(payload.macros.perServing);
-          }
-        } finally {
-          setScaleLoading(false);
-        }
-      }, 300);
-
-      return;
+      return null;
     }
 
     try {
@@ -193,11 +169,52 @@ export function RecipeEditorClient({ recipe }: RecipeEditorClientProps) {
         servings,
       );
 
-      setScaledMacros(macros.perServing);
+      return macros.perServing;
     } catch {
-      setScaledMacros(null);
+      return null;
     }
-  }, [scaleFactor, validIngredients, servings, liveMacros, recipe?.id]);
+  }, [liveMacros, recipe?.id, scaleFactor, servings, validIngredients]);
+
+  useEffect(() => {
+    if (!recipe?.id || scaleFactor === 1 || validIngredients.length === 0) {
+      return;
+    }
+
+    if (scaleDebounceRef.current) {
+      clearTimeout(scaleDebounceRef.current);
+    }
+
+    scaleDebounceRef.current = setTimeout(async () => {
+      setScaleLoading(true);
+      try {
+        const response = await fetch(
+          `/api/v1/recipes/${recipe.id}/scale`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ scaleFactor }),
+          },
+        );
+        const payload = await response.json();
+        if (response.ok) {
+          setApiScaledMacros(payload.macros.perServing);
+        }
+      } finally {
+        setScaleLoading(false);
+      }
+    }, 300);
+
+    return () => {
+      if (scaleDebounceRef.current) {
+        clearTimeout(scaleDebounceRef.current);
+      }
+    };
+  }, [scaleFactor, validIngredients, recipe?.id]);
+
+  const previewMacros =
+    recipe?.id && scaleFactor !== 1 && validIngredients.length > 0
+      ? apiScaledMacros
+      : locallyScaledMacros;
 
   async function handleSave(event: React.FormEvent) {
     event.preventDefault();
@@ -435,7 +452,7 @@ export function RecipeEditorClient({ recipe }: RecipeEditorClientProps) {
             recipeId={recipe?.id}
             scaleFactor={scaleFactor}
             onScaleFactorChange={setScaleFactor}
-            previewMacros={scaledMacros}
+            previewMacros={previewMacros}
             loading={scaleLoading}
           />
         </aside>

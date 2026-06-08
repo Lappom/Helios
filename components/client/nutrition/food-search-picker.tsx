@@ -34,7 +34,6 @@ export function FoodSearchPicker({ items, onChange }: FoodSearchPickerProps) {
     }
 
     if (query.trim().length < 2) {
-      setResults([]);
       return;
     }
 
@@ -63,6 +62,8 @@ export function FoodSearchPicker({ items, onChange }: FoodSearchPickerProps) {
       }
     };
   }, [query]);
+
+  const visibleResults = query.trim().length < 2 ? [] : results;
 
   function addFood(food: FoodListItem) {
     onChange([
@@ -109,9 +110,9 @@ export function FoodSearchPicker({ items, onChange }: FoodSearchPickerProps) {
           placeholder="Rechercher un aliment…"
           className="border-hairline bg-surface-elevated pl-10"
         />
-        {open && results.length > 0 ? (
+        {open && visibleResults.length > 0 ? (
           <div className="border-hairline bg-surface-card absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded-md border">
-            {results.map((food) => (
+            {visibleResults.map((food) => (
               <button
                 key={food.id}
                 type="button"

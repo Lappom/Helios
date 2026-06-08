@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { AlertTriangle, Download } from "lucide-react";
 import { useState } from "react";
@@ -110,9 +111,12 @@ export function AssessmentDetailClient({
               >
                 <span className="text-muted text-sm">{response.field.label}</span>
                 {response.photoBlobPath ? (
-                  <img
+                  <Image
                     src={assessmentPhotoUrl(assessment.id, response.id)}
                     alt={response.field.label}
+                    width={128}
+                    height={128}
+                    unoptimized
                     className="bg-surface-elevated size-32 rounded-md object-cover"
                   />
                 ) : (

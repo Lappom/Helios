@@ -1,7 +1,7 @@
 "use client";
 
 import { Pencil } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { FoodFormDialog } from "@/components/coach/foods/food-form-dialog";
 import { FoodMacroPanel } from "@/components/coach/foods/food-macro-panel";
 import { Badge } from "@/components/ui/badge";
@@ -30,15 +30,15 @@ export function FoodPreviewModal({
   onUpdated,
 }: FoodPreviewModalProps) {
   const [mode, setMode] = useState<"per100g" | "portion">("per100g");
-  const [servingSize, setServingSize] = useState(100);
+  const [servingSize, setServingSize] = useState(food?.servingSize ?? 100);
   const [editOpen, setEditOpen] = useState(false);
+  const [prevFoodId, setPrevFoodId] = useState(food?.id);
 
-  useEffect(() => {
-    if (food) {
-      setServingSize(food.servingSize);
-      setMode("per100g");
-    }
-  }, [food]);
+  if (food && food.id !== prevFoodId) {
+    setPrevFoodId(food.id);
+    setServingSize(food.servingSize);
+    setMode("per100g");
+  }
 
   if (!food) {
     return null;

@@ -22,7 +22,37 @@ export function AssessmentReviewQueue({ onReviewed }: AssessmentReviewQueueProps
   const [criticalOnly, setCriticalOnly] = useState(false);
   const [reviewingId, setReviewingId] = useState<string | null>(null);
 
-  async function load() {
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const payload = await fetchAssessments({
+          status: "submitted",
+          criticalOnly,
+        });
+        if (!cancelled) {
+          setItems(payload.items);
+        }
+      } catch {
+        if (!cancelled) {
+          toast.error("Impossible de charger les bilans.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [criticalOnly]);
+
+  async function reload() {
     setLoading(true);
     try {
       const payload = await fetchAssessments({
@@ -37,16 +67,12 @@ export function AssessmentReviewQueue({ onReviewed }: AssessmentReviewQueueProps
     }
   }
 
-  useEffect(() => {
-    void load();
-  }, [criticalOnly]);
-
   async function handleReview(id: string) {
     setReviewingId(id);
     try {
       await reviewAssessmentRequest(id);
       toast.success("Bilan marqué comme analysé.");
-      await load();
+      await reload();
       onReviewed?.();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur");
@@ -65,7 +91,10 @@ export function AssessmentReviewQueue({ onReviewed }: AssessmentReviewQueueProps
         <input
           type="checkbox"
           checked={criticalOnly}
-          onChange={(event) => setCriticalOnly(event.target.checked)}
+          onChange={(event) => {
+            setLoading(true);
+            setCriticalOnly(event.target.checked);
+          }}
           className="accent-primary"
         />
         Alertes critiques uniquement

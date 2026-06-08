@@ -246,6 +246,14 @@ export async function assignProgram(
         }),
       );
       activeClientIds.add(clientId);
+
+      const { emitHeliosEvent } = await import("@/lib/events/emit");
+      emitHeliosEvent("program.published", {
+        organizationId,
+        programId,
+        clientId,
+        assignmentId: inserted.id,
+      });
     }
   }
 

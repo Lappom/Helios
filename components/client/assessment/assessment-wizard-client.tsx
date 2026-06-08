@@ -74,22 +74,27 @@ export function AssessmentWizardClient({
         photoBlobPath: response.photoBlobPath,
       };
     }
-    return initial;
+
+    if (typeof window === "undefined") {
+      return initial;
+    }
+
+    const saved = localStorage.getItem(
+      `helios-assessment-draft-${assessmentId}`,
+    );
+    if (!saved) {
+      return initial;
+    }
+
+    try {
+      return JSON.parse(saved) as Record<string, ResponseDraft>;
+    } catch {
+      return initial;
+    }
   });
   const [submitting, setSubmitting] = useState(false);
 
   const storageKey = `helios-assessment-draft-${assessmentId}`;
-
-  useEffect(() => {
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      try {
-        setDrafts(JSON.parse(saved) as Record<string, ResponseDraft>);
-      } catch {
-        // ignore corrupt draft
-      }
-    }
-  }, [storageKey]);
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(drafts));

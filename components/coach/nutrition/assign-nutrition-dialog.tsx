@@ -47,26 +47,44 @@ export function AssignNutritionDialog({
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setSelectedIds([]);
+      setLoadingData(true);
+    }
+  }
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setLoadingData(true);
-    setSelectedIds([]);
+    let cancelled = false;
 
     fetch("/api/v1/clients?limit=100")
       .then((response) => response.json())
       .then((payload: { items: ClientListItem[] }) => {
-        setClients(payload.items ?? []);
+        if (!cancelled) {
+          setClients(payload.items ?? []);
+        }
       })
       .catch(() => {
-        toast.error("Impossible de charger les clients.");
+        if (!cancelled) {
+          toast.error("Impossible de charger les clients.");
+        }
       })
       .finally(() => {
-        setLoadingData(false);
+        if (!cancelled) {
+          setLoadingData(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   const assignableClients = useMemo(

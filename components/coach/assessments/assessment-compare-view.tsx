@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { AssessmentCompareResult } from "@/lib/assessments/types";
 import { assessmentPhotoUrl } from "@/lib/assessments/api-client";
 import { AssessmentWeightChart } from "@/components/coach/assessments/assessment-weight-chart";
@@ -74,14 +75,18 @@ export function AssessmentCompareView({ compare }: AssessmentCompareViewProps) {
                         Précédent
                       </p>
                       {previousResponse && compare.previous ? (
-                        <img
-                          src={assessmentPhotoUrl(
-                            compare.previous.id,
-                            previousResponse.id,
-                          )}
-                          alt={`${pair.label} précédent`}
-                          className="bg-surface-elevated aspect-[3/4] w-full rounded-md object-cover"
-                        />
+                        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md">
+                          <Image
+                            src={assessmentPhotoUrl(
+                              compare.previous.id,
+                              previousResponse.id,
+                            )}
+                            alt={`${pair.label} précédent`}
+                            fill
+                            unoptimized
+                            className="bg-surface-elevated object-cover"
+                          />
+                        </div>
                       ) : (
                         <div className="bg-surface-elevated text-muted flex aspect-[3/4] items-center justify-center rounded-md text-xs">
                           —
@@ -93,14 +98,18 @@ export function AssessmentCompareView({ compare }: AssessmentCompareViewProps) {
                         Actuel
                       </p>
                       {currentResponse && compare.current ? (
-                        <img
-                          src={assessmentPhotoUrl(
-                            compare.current.id,
-                            currentResponse.id,
-                          )}
-                          alt={`${pair.label} actuel`}
-                          className="bg-surface-elevated aspect-[3/4] w-full rounded-md object-cover"
-                        />
+                        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md">
+                          <Image
+                            src={assessmentPhotoUrl(
+                              compare.current.id,
+                              currentResponse.id,
+                            )}
+                            alt={`${pair.label} actuel`}
+                            fill
+                            unoptimized
+                            className="bg-surface-elevated object-cover"
+                          />
+                        </div>
                       ) : (
                         <div className="bg-surface-elevated text-muted flex aspect-[3/4] items-center justify-center rounded-md text-xs">
                           —

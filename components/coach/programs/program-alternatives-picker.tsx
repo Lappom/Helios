@@ -19,10 +19,12 @@ export function ProgramAlternativesPicker({
   const [search, setSearch] = useState("");
   const [results, setResults] = useState<ExerciseListItem[]>([]);
   const [localIds, setLocalIds] = useState(selectedIds);
+  const [prevSelectedIds, setPrevSelectedIds] = useState(selectedIds);
 
-  useEffect(() => {
+  if (selectedIds !== prevSelectedIds) {
+    setPrevSelectedIds(selectedIds);
     setLocalIds(selectedIds);
-  }, [selectedIds]);
+  }
 
   useEffect(() => {
     const controller = new AbortController();

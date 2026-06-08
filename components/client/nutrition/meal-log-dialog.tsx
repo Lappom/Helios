@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   FoodSearchPicker,
@@ -33,14 +33,31 @@ export function MealLogDialog({
   mealName,
   onLogged,
 }: MealLogDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <MealLogDialogContent
+          key={mealId ?? "general"}
+          date={date}
+          mealId={mealId}
+          mealName={mealName}
+          onLogged={onLogged}
+          onOpenChange={onOpenChange}
+        />
+      ) : null}
+    </Dialog>
+  );
+}
+
+function MealLogDialogContent({
+  date,
+  mealId,
+  mealName,
+  onLogged,
+  onOpenChange,
+}: Omit<MealLogDialogProps, "open">) {
   const [items, setItems] = useState<LogItemDraft[]>([]);
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (open) {
-      setItems([]);
-    }
-  }, [open, mealId]);
 
   async function handleSubmit() {
     if (items.length === 0) {
@@ -74,8 +91,7 @@ export function MealLogDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="border-hairline bg-surface-card max-h-[90vh] overflow-y-auto sm:max-w-lg">
+    <DialogContent className="border-hairline bg-surface-card max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-on-dark">
             {mealName ? `Logger — ${mealName}` : "Logger un repas"}
@@ -100,7 +116,6 @@ export function MealLogDialog({
             Enregistrer
           </Button>
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+    </DialogContent>
   );
 }

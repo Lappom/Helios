@@ -14,20 +14,23 @@ export default async function CoachAssessmentDetailPage({ params }: PageProps) {
   const org = await requireRole("org_owner", "org_admin", "coach", "assistant");
   const { id } = await params;
 
+  let assessment;
+  let compare;
   try {
-    const assessment = await getAssessmentDetail(org.organizationId, id);
-    const compare = await compareClientAssessments(
+    assessment = await getAssessmentDetail(org.organizationId, id);
+    compare = await compareClientAssessments(
       org.organizationId,
       assessment.clientId,
       assessment.id,
     );
-    return (
-      <AssessmentDetailClient
-        initialAssessment={assessment}
-        initialCompare={compare}
-      />
-    );
   } catch {
     notFound();
   }
+
+  return (
+    <AssessmentDetailClient
+      initialAssessment={assessment}
+      initialCompare={compare}
+    />
+  );
 }

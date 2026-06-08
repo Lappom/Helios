@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,24 +49,24 @@ export function FoodFormDialog({
     fiberG: food?.per100g.fiberG ?? "",
     sugarG: food?.per100g.sugarG ?? "",
   });
+  const [prevFoodId, setPrevFoodId] = useState(food?.id);
 
-  useEffect(() => {
-    if (food) {
-      setForm({
-        name: food.name,
-        brand: food.brand ?? "",
-        barcode: food.barcode ?? "",
-        servingSize: food.servingSize,
-        servingUnit: food.servingUnit,
-        calories: food.per100g.calories,
-        proteinG: food.per100g.proteinG,
-        carbsG: food.per100g.carbsG,
-        fatG: food.per100g.fatG,
-        fiberG: food.per100g.fiberG ?? "",
-        sugarG: food.per100g.sugarG ?? "",
-      });
-    }
-  }, [food]);
+  if (food && food.id !== prevFoodId) {
+    setPrevFoodId(food.id);
+    setForm({
+      name: food.name,
+      brand: food.brand ?? "",
+      barcode: food.barcode ?? "",
+      servingSize: food.servingSize,
+      servingUnit: food.servingUnit,
+      calories: food.per100g.calories,
+      proteinG: food.per100g.proteinG,
+      carbsG: food.per100g.carbsG,
+      fatG: food.per100g.fatG,
+      fiberG: food.per100g.fiberG ?? "",
+      sugarG: food.per100g.sugarG ?? "",
+    });
+  }
 
   const computedCalories = computeCaloriesFromMacros({
     calories: form.calories,

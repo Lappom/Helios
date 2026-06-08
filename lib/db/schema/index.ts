@@ -61,6 +61,11 @@ import {
 } from "./bookings";
 import { promoCodes } from "./promo-codes";
 import { payments, revenueSnapshots } from "./payments";
+import {
+  notificationLogs,
+  notificationTemplates,
+  pushSubscriptions,
+} from "./notifications";
 
 export * from "./enums";
 export * from "./organization";
@@ -78,6 +83,7 @@ export * from "./coach-profiles";
 export * from "./bookings";
 export * from "./promo-codes";
 export * from "./payments";
+export * from "./notifications";
 
 export const organizationsRelations = relations(
   organizations,
@@ -110,6 +116,9 @@ export const organizationsRelations = relations(
     promoCodes: many(promoCodes),
     payments: many(payments),
     revenueSnapshots: many(revenueSnapshots),
+    notificationTemplates: many(notificationTemplates),
+    notificationLogs: many(notificationLogs),
+    pushSubscriptions: many(pushSubscriptions),
   }),
 );
 
@@ -135,6 +144,8 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   assessments: many(assessments),
   habitAssignments: many(habitAssignments),
   habitLogs: many(habitLogs),
+  notificationLogs: many(notificationLogs),
+  pushSubscriptions: many(pushSubscriptions),
 }));
 
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
@@ -879,6 +890,49 @@ export const revenueSnapshotsRelations = relations(
     organization: one(organizations, {
       fields: [revenueSnapshots.organizationId],
       references: [organizations.id],
+    }),
+  }),
+);
+
+export const notificationTemplatesRelations = relations(
+  notificationTemplates,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [notificationTemplates.organizationId],
+      references: [organizations.id],
+    }),
+    logs: many(notificationLogs),
+  }),
+);
+
+export const notificationLogsRelations = relations(
+  notificationLogs,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [notificationLogs.organizationId],
+      references: [organizations.id],
+    }),
+    template: one(notificationTemplates, {
+      fields: [notificationLogs.templateId],
+      references: [notificationTemplates.id],
+    }),
+    client: one(clients, {
+      fields: [notificationLogs.clientId],
+      references: [clients.id],
+    }),
+  }),
+);
+
+export const pushSubscriptionsRelations = relations(
+  pushSubscriptions,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [pushSubscriptions.organizationId],
+      references: [organizations.id],
+    }),
+    client: one(clients, {
+      fields: [pushSubscriptions.clientId],
+      references: [clients.id],
     }),
   }),
 );

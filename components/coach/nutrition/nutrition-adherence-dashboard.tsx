@@ -51,11 +51,28 @@ export function NutritionAdherenceDashboard({
   const range = useMemo(() => getRange(periodDays), [periodDays]);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
+
     fetchPlanAdherence(planId, range)
-      .then(setReport)
-      .catch(() => setReport(null))
-      .finally(() => setLoading(false));
+      .then((report) => {
+        if (!cancelled) {
+          setReport(report);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setReport(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [planId, range]);
 
   const chartData = useMemo(() => {
@@ -98,7 +115,10 @@ export function NutritionAdherenceDashboard({
               "border-hairline",
               periodDays === days && "bg-primary text-on-primary border-primary",
             )}
-            onClick={() => setPeriodDays(days)}
+            onClick={() => {
+              setLoading(true);
+              setPeriodDays(days);
+            }}
           >
             {days} jours
           </Button>

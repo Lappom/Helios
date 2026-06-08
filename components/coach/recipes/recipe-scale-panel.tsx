@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { RecipeMacroPanel } from "@/components/coach/recipes/recipe-macro-panel";
 import type { RecipeMacros } from "@/lib/recipes/types";
 
@@ -20,10 +20,12 @@ export function RecipeScalePanel({
   loading,
 }: RecipeScalePanelProps) {
   const [localFactor, setLocalFactor] = useState(scaleFactor);
+  const [prevScaleFactor, setPrevScaleFactor] = useState(scaleFactor);
 
-  useEffect(() => {
+  if (scaleFactor !== prevScaleFactor) {
+    setPrevScaleFactor(scaleFactor);
     setLocalFactor(scaleFactor);
-  }, [scaleFactor]);
+  }
 
   return (
     <div className="border-hairline bg-surface-card space-y-4 rounded-lg border p-4">

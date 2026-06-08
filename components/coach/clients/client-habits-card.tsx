@@ -11,15 +11,36 @@ type ClientHabitsCardProps = {
 };
 
 export function ClientHabitsCard({ clientId }: ClientHabitsCardProps) {
+  return <ClientHabitsCardContent key={clientId} clientId={clientId} />;
+}
+
+function ClientHabitsCardContent({ clientId }: ClientHabitsCardProps) {
   const [stats, setStats] = useState<ClientHabitStatsReport | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
+
     fetchClientHabitStats(clientId)
-      .then(setStats)
-      .catch(() => setStats(null))
-      .finally(() => setLoading(false));
+      .then((data) => {
+        if (!cancelled) {
+          setStats(data);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setStats(null);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [clientId]);
 
   const activeAssignments = stats?.assignments ?? [];

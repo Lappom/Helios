@@ -12,26 +12,41 @@ type ClientActiveProgramCardProps = {
 export function ClientActiveProgramCard({
   clientId,
 }: ClientActiveProgramCardProps) {
+  return <ClientActiveProgramCardContent key={clientId} clientId={clientId} />;
+}
+
+function ClientActiveProgramCardContent({
+  clientId,
+}: ClientActiveProgramCardProps) {
   const [assignment, setAssignment] =
     useState<ProgramAssignmentWithProgram | null>(null);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setMissing(false);
+    let cancelled = false;
 
     fetchActiveClientProgram(clientId)
       .then((payload) => {
-        setAssignment(payload);
+        if (!cancelled) {
+          setAssignment(payload);
+        }
       })
       .catch(() => {
-        setAssignment(null);
-        setMissing(true);
+        if (!cancelled) {
+          setAssignment(null);
+          setMissing(true);
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [clientId]);
 
   return (

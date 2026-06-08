@@ -11,10 +11,12 @@ export default async function AssessmentTemplateEditPage({ params }: PageProps) 
   const org = await requireRole("org_owner", "org_admin", "coach", "assistant");
   const { id } = await params;
 
+  let template;
   try {
-    const template = await getAssessmentTemplateTree(org.organizationId, id);
-    return <AssessmentTemplateEditorClient initialTemplate={template} />;
+    template = await getAssessmentTemplateTree(org.organizationId, id);
   } catch {
     notFound();
   }
+
+  return <AssessmentTemplateEditorClient initialTemplate={template} />;
 }

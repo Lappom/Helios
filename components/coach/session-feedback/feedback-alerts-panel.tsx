@@ -13,17 +13,28 @@ export function FeedbackAlertsPanel() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
+
     fetchFeedbackAlerts({ limit: 5 })
       .then((payload) => {
-        setItems(payload.items);
+        if (!cancelled) {
+          setItems(payload.items);
+        }
       })
       .catch(() => {
-        toast.error("Impossible de charger les alertes feedback.");
+        if (!cancelled) {
+          toast.error("Impossible de charger les alertes feedback.");
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (loading) {

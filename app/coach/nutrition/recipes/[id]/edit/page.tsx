@@ -17,25 +17,27 @@ export default async function CoachRecipeEditPage({ params }: PageProps) {
   );
   const { id } = await params;
 
+  let recipe;
   try {
-    const recipe = await getRecipeById(org.organizationId, id);
-    return (
-      <div className="space-y-6">
-        <div>
-          <h2 className="text-title-lg text-on-dark font-bold tracking-tight">
-            {recipe.name}
-          </h2>
-          <p className="text-body-md text-muted mt-2">
-            Modifiez les ingrédients, étapes et portions.
-          </p>
-        </div>
-        <RecipeEditorClient recipe={recipe} />
-      </div>
-    );
+    recipe = await getRecipeById(org.organizationId, id);
   } catch (error) {
     if (error instanceof ApiProblemError && error.problem.status === 404) {
       notFound();
     }
     throw error;
   }
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-title-lg text-on-dark font-bold tracking-tight">
+          {recipe.name}
+        </h2>
+        <p className="text-body-md text-muted mt-2">
+          Modifiez les ingrédients, étapes et portions.
+        </p>
+      </div>
+      <RecipeEditorClient recipe={recipe} />
+    </div>
+  );
 }

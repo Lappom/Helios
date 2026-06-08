@@ -12,13 +12,15 @@ export default async function CoachProgramEditPage({ params }: PageProps) {
   const org = await requireRole("org_owner", "org_admin", "coach", "assistant");
   const { id } = await params;
 
+  let program;
   try {
-    const program = await getProgramTree(org.organizationId, id);
-    return <ProgramEditorClient initialProgram={program} />;
+    program = await getProgramTree(org.organizationId, id);
   } catch (error) {
     if (error instanceof ApiProblemError && error.problem.status === 404) {
       notFound();
     }
     throw error;
   }
+
+  return <ProgramEditorClient initialProgram={program} />;
 }

@@ -158,3 +158,33 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "refunded",
   "failed",
 ]);
+
+export const notificationChannelEnum = pgEnum("notification_channel", [
+  "email",
+  "in_app",
+  "push",
+]);
+
+export const notificationTriggerEnum = pgEnum("notification_trigger", [
+  "manual",
+  "scheduled",
+  "event",
+]);
+
+export const notificationEventTypeEnum = pgEnum("notification_event_type", [
+  "session_due",
+  "assessment_due",
+  "habit_reminder",
+  "booking_reminder",
+  "payment_received",
+  "message_new",
+  "program_published",
+]);
+
+export const notificationLogStatusEnum = pgEnum("notification_log_status", [
+  "queued",
+  "sent",
+  "failed",
+  "opened",
+  "clicked",
+]);

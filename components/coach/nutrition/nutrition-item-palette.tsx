@@ -63,7 +63,6 @@ export function NutritionItemPalette({
 
   useEffect(() => {
     if (tab !== "foods" || query.trim().length < 2) {
-      setFoods([]);
       return;
     }
 
@@ -93,14 +92,28 @@ export function NutritionItemPalette({
       return;
     }
 
-    setLoading(true);
+    let cancelled = false;
+
     fetch("/api/v1/recipes?limit=20&page=1")
       .then((response) => response.json())
       .then((payload: { items: RecipeListItem[] }) => {
-        setRecipes(payload.items ?? []);
+        if (!cancelled) {
+          setRecipes(payload.items ?? []);
+        }
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [tab]);
+
+  const visibleFoods =
+    tab !== "foods" || query.trim().length < 2 ? [] : foods;
 
   const filteredRecipes = recipes.filter((recipe) => {
     if (!query.trim()) {
@@ -131,7 +144,10 @@ export function NutritionItemPalette({
           </button>
           <button
             type="button"
-            onClick={() => setTab("recipes")}
+            onClick={() => {
+              setLoading(true);
+              setTab("recipes");
+            }}
             className={cn(
               "rounded-md px-3 py-1.5 text-sm font-semibold",
               tab === "recipes"
@@ -154,12 +170,12 @@ export function NutritionItemPalette({
         {loading ? (
           <p className="text-muted text-sm">Chargement…</p>
         ) : tab === "foods" ? (
-          foods.length === 0 ? (
+          visibleFoods.length === 0 ? (
             <p className="text-muted text-sm">
               Tapez au moins 2 caractères pour rechercher.
             </p>
           ) : (
-            foods.map((food) => (
+            visibleFoods.map((food) => (
               <div key={food.id} className="space-y-1">
                 <DraggablePaletteItem
                   id={`${PALETTE_FOOD_PREFIX}${food.id}`}

@@ -1,6 +1,9 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { habitAssignments, habitLogs } from "@/lib/db/schema";
+import { clients, habitAssignments, habitLogs } from "@/lib/db/schema";
+import { getOrganizationPlanTier } from "@/lib/notifications/cron";
+import { dispatchNotification } from "@/lib/notifications/dispatch";
+import { getActiveEventTemplate } from "@/lib/notifications/service";
 import { utcToday } from "./stats";
 
 export type HabitReminderPayload = {
@@ -15,9 +18,45 @@ export type HabitReminderPayload = {
 export async function enqueueNotification(
   payload: HabitReminderPayload,
 ): Promise<void> {
-  if (process.env.NODE_ENV !== "production") {
-    console.info("[habits] notification stub", payload);
+  const template = await getActiveEventTemplate(
+    payload.organizationId,
+    "habit_reminder",
+    "push",
+  );
+
+  if (!template) {
+    return;
   }
+
+  const client = await db.query.clients.findFirst({
+    where: and(
+      eq(clients.organizationId, payload.organizationId),
+      eq(clients.id, payload.clientId),
+    ),
+    columns: { id: true, email: true },
+  });
+
+  if (!client) {
+    return;
+  }
+
+  const planTier = await getOrganizationPlanTier(payload.organizationId);
+
+  await dispatchNotification({
+    organizationId: payload.organizationId,
+    planTier,
+    channel: template.channel,
+    subject: template.subject ?? undefined,
+    content: template.content,
+    templateId: template.id,
+    eventType: "habit_reminder",
+    recipients: [{ clientId: client.id, email: client.email }],
+    metadata: {
+      habitName: payload.habitName,
+      url: "/client/habits",
+    },
+    idempotencyKey: `habit_reminder:${payload.assignmentId}:${utcToday()}`,
+  });
 }
 
 export async function processHabitReminders(now: Date = new Date()): Promise<{

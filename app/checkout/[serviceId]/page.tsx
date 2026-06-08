@@ -22,19 +22,21 @@ export async function generateMetadata({ params }: CheckoutPageProps) {
 export default async function CheckoutPage({ params }: CheckoutPageProps) {
   const { serviceId } = await params;
 
+  let checkoutData;
   try {
-    const { service, coachName, coachSlug } =
-      await getPublicServiceById(serviceId);
-
-    return (
-      <CheckoutFlowClient
-        coachSlug={coachSlug}
-        coachName={coachName}
-        service={service}
-        backHref={`/find/coaches/${coachSlug}`}
-      />
-    );
+    checkoutData = await getPublicServiceById(serviceId);
   } catch {
     notFound();
   }
+
+  const { service, coachName, coachSlug } = checkoutData;
+
+  return (
+    <CheckoutFlowClient
+      coachSlug={coachSlug}
+      coachName={coachName}
+      service={service}
+      backHref={`/find/coaches/${coachSlug}`}
+    />
+  );
 }

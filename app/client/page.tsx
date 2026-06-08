@@ -24,25 +24,29 @@ export default async function ClientPortalPage() {
     redirect("/sign-in");
   }
 
+  let schedule;
+  let habitsSummary = null;
+  let hasActiveProgram = true;
+
   try {
     const weekStart = startOfWeekMonday(new Date());
     const weekEnd = addDays(weekStart, 6);
     weekEnd.setHours(23, 59, 59, 999);
 
-    const schedule = await getEnrichedSchedule(org.organizationId, clientId, {
+    schedule = await getEnrichedSchedule(org.organizationId, clientId, {
       start: weekStart,
       end: weekEnd,
     });
 
     const habitsEnabled = await hasFeature("habits");
-    const habitsSummary = habitsEnabled
+    habitsSummary = habitsEnabled
       ? await getClientHabitsSummary(org.organizationId, clientId)
       : null;
-
-    return (
-      <ClientHomeContent schedule={schedule} habitsSummary={habitsSummary} />
-    );
   } catch {
+    hasActiveProgram = false;
+  }
+
+  if (!hasActiveProgram) {
     return (
       <div className="mx-auto max-w-4xl space-y-4">
         <h1 className="text-display-sm text-on-dark font-bold tracking-tight">
@@ -55,4 +59,8 @@ export default async function ClientPortalPage() {
       </div>
     );
   }
+
+  return (
+    <ClientHomeContent schedule={schedule!} habitsSummary={habitsSummary} />
+  );
 }

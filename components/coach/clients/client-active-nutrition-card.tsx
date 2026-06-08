@@ -12,26 +12,43 @@ type ClientActiveNutritionCardProps = {
 export function ClientActiveNutritionCard({
   clientId,
 }: ClientActiveNutritionCardProps) {
+  return (
+    <ClientActiveNutritionCardContent key={clientId} clientId={clientId} />
+  );
+}
+
+function ClientActiveNutritionCardContent({
+  clientId,
+}: ClientActiveNutritionCardProps) {
   const [assignment, setAssignment] =
     useState<NutritionAssignmentWithPlan | null>(null);
   const [loading, setLoading] = useState(true);
   const [missing, setMissing] = useState(false);
 
   useEffect(() => {
-    setLoading(true);
-    setMissing(false);
+    let cancelled = false;
 
     fetchActiveClientNutrition(clientId)
       .then((payload) => {
-        setAssignment(payload);
+        if (!cancelled) {
+          setAssignment(payload);
+        }
       })
       .catch(() => {
-        setAssignment(null);
-        setMissing(true);
+        if (!cancelled) {
+          setAssignment(null);
+          setMissing(true);
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [clientId]);
 
   return (

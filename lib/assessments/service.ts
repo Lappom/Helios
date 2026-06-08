@@ -773,7 +773,12 @@ export async function submitAssessment(
     })
     .where(eq(assessments.id, assessmentId));
 
-  // TODO(P5): emit assessment.submitted event for automations
+  const { emitHeliosEvent } = await import("@/lib/events/emit");
+  emitHeliosEvent("assessment.submitted", {
+    organizationId,
+    assessmentId,
+    clientId: assessment.clientId,
+  });
 
   return getAssessmentDetail(organizationId, assessmentId);
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { AssessmentFieldDetail } from "@/lib/assessments/types";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -145,13 +146,16 @@ export function AssessmentWizardStep({
                 className={cn(
                   "border-hairline bg-surface-elevated relative overflow-hidden rounded-lg border",
                   "flex min-h-48 items-center justify-center",
+                  previewUrl && "min-h-64",
                 )}
               >
                 {previewUrl ? (
-                  <img
+                  <Image
                     src={previewUrl}
                     alt={field.label}
-                    className="max-h-64 w-full object-contain"
+                    fill
+                    unoptimized
+                    className="object-contain"
                   />
                 ) : (
                   <p className="text-muted text-sm">

@@ -12,6 +12,10 @@ type ClientFeedbackCardProps = {
 };
 
 export function ClientFeedbackCard({ clientId }: ClientFeedbackCardProps) {
+  return <ClientFeedbackCardContent key={clientId} clientId={clientId} />;
+}
+
+function ClientFeedbackCardContent({ clientId }: ClientFeedbackCardProps) {
   const [feelingAverageLast4, setFeelingAverageLast4] = useState<number | null>(
     null,
   );
@@ -19,18 +23,29 @@ export function ClientFeedbackCard({ clientId }: ClientFeedbackCardProps) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setLoading(true);
+    let cancelled = false;
+
     fetchClientFeedbacks(clientId, { limit: 10 })
       .then((payload) => {
-        setFeelingAverageLast4(payload.feelingAverageLast4);
-        setItems(payload.items);
+        if (!cancelled) {
+          setFeelingAverageLast4(payload.feelingAverageLast4);
+          setItems(payload.items);
+        }
       })
       .catch(() => {
-        toast.error("Impossible de charger les feedbacks.");
+        if (!cancelled) {
+          toast.error("Impossible de charger les feedbacks.");
+        }
       })
       .finally(() => {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       });
+
+    return () => {
+      cancelled = true;
+    };
   }, [clientId]);
 
   return (

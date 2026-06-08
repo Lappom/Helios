@@ -44,22 +44,42 @@ export function AssignAssessmentDialog({
   const [templateId, setTemplateId] = useState("");
   const [loading, setLoading] = useState(false);
   const [assigning, setAssigning] = useState(false);
+  const [prevOpen, setPrevOpen] = useState(open);
+
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) {
+      setLoading(true);
+    }
+  }
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
-    setLoading(true);
+    let cancelled = false;
+
     fetchAssessmentTemplates()
       .then((payload) => {
+        if (cancelled) {
+          return;
+        }
         setTemplates(payload.items);
         const defaultTemplate =
           payload.items.find((item) => item.isDefault) ?? payload.items[0];
         setTemplateId(defaultTemplate?.id ?? "");
       })
       .catch(() => toast.error("Impossible de charger les templates."))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [open]);
 
   async function handleAssign() {

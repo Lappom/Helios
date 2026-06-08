@@ -11,10 +11,12 @@ type RestTimerProps = {
 
 export function RestTimer({ seconds, onDismiss }: RestTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
+  const [prevSeconds, setPrevSeconds] = useState(seconds);
 
-  useEffect(() => {
+  if (seconds !== prevSeconds) {
+    setPrevSeconds(seconds);
     setRemaining(seconds);
-  }, [seconds]);
+  }
 
   useEffect(() => {
     if (remaining <= 0) {
