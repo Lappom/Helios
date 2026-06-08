@@ -52,6 +52,7 @@ import {
   sessionFeedback,
   sessionFeedbackTemplates,
 } from "./session-feedback";
+import { habitAssignments, habitLogs, habits } from "./habits";
 
 export * from "./enums";
 export * from "./organization";
@@ -64,6 +65,7 @@ export * from "./recipes";
 export * from "./session-logs";
 export * from "./assessments";
 export * from "./session-feedback";
+export * from "./habits";
 
 export const organizationsRelations = relations(
   organizations,
@@ -85,6 +87,9 @@ export const organizationsRelations = relations(
     assessments: many(assessments),
     sessionFeedbackTemplates: many(sessionFeedbackTemplates),
     sessionFeedback: many(sessionFeedback),
+    habits: many(habits),
+    habitAssignments: many(habitAssignments),
+    habitLogs: many(habitLogs),
   }),
 );
 
@@ -108,6 +113,8 @@ export const clientsRelations = relations(clients, ({ one, many }) => ({
   sessionLogs: many(sessionLogs),
   mealLogs: many(mealLogs),
   assessments: many(assessments),
+  habitAssignments: many(habitAssignments),
+  habitLogs: many(habitLogs),
 }));
 
 export const clientNotesRelations = relations(clientNotes, ({ one }) => ({
@@ -713,3 +720,45 @@ export const feedbackResponsesRelations = relations(
     }),
   }),
 );
+
+export const habitsRelations = relations(habits, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [habits.organizationId],
+    references: [organizations.id],
+  }),
+  assignments: many(habitAssignments),
+}));
+
+export const habitAssignmentsRelations = relations(
+  habitAssignments,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [habitAssignments.organizationId],
+      references: [organizations.id],
+    }),
+    habit: one(habits, {
+      fields: [habitAssignments.habitId],
+      references: [habits.id],
+    }),
+    client: one(clients, {
+      fields: [habitAssignments.clientId],
+      references: [clients.id],
+    }),
+    logs: many(habitLogs),
+  }),
+);
+
+export const habitLogsRelations = relations(habitLogs, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [habitLogs.organizationId],
+    references: [organizations.id],
+  }),
+  assignment: one(habitAssignments, {
+    fields: [habitLogs.assignmentId],
+    references: [habitAssignments.id],
+  }),
+  client: one(clients, {
+    fields: [habitLogs.clientId],
+    references: [clients.id],
+  }),
+}));

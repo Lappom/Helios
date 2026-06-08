@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ClientActiveAssessmentsCard } from "@/components/coach/clients/client-active-assessments-card";
+import { ClientHabitsCard } from "@/components/coach/clients/client-habits-card";
+import { FeatureGate } from "@/components/billing/feature-gate";
 import { ClientFeedbackCard } from "@/components/coach/session-feedback/client-feedback-card";
 import { ClientActiveNutritionCard } from "@/components/coach/clients/client-active-nutrition-card";
 import { ClientActiveProgramCard } from "@/components/coach/clients/client-active-program-card";
@@ -167,6 +169,9 @@ export function ClientDetailClient({ initialClient }: ClientDetailClientProps) {
         clientName={`${client.firstName} ${client.lastName}`}
       />
       <ClientFeedbackCard clientId={client.id} />
+      <FeatureGate feature="habits">
+        <ClientHabitsCard clientId={client.id} />
+      </FeatureGate>
 
       <div className="grid gap-6 lg:grid-cols-[320px_1fr]">
         <aside className="space-y-6">

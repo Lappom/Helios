@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { ClientHomeContent } from "@/components/client/home/client-home-content";
 import { getOrgContext } from "@/lib/auth/org-context";
 import { getClientIdForUser } from "@/lib/api/require-client";
+import { hasFeature } from "@/lib/billing/access";
+import { getClientHabitsSummary } from "@/lib/habits/service";
 import { addDays, startOfWeekMonday } from "@/lib/programs/schedule";
 import { getEnrichedSchedule } from "@/lib/sessions/service";
 
@@ -32,7 +34,14 @@ export default async function ClientPortalPage() {
       end: weekEnd,
     });
 
-    return <ClientHomeContent schedule={schedule} />;
+    const habitsEnabled = await hasFeature("habits");
+    const habitsSummary = habitsEnabled
+      ? await getClientHabitsSummary(org.organizationId, clientId)
+      : null;
+
+    return (
+      <ClientHomeContent schedule={schedule} habitsSummary={habitsSummary} />
+    );
   } catch {
     return (
       <div className="mx-auto max-w-4xl space-y-4">

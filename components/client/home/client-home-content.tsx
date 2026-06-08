@@ -3,15 +3,21 @@
 import Link from "next/link";
 import { SessionStatusBadge } from "@/components/client/session-status-badge";
 import { ClientPendingAssessmentBanner } from "@/components/client/assessment/client-pending-assessment-banner";
+import { ClientHabitsHomeWidget } from "@/components/client/habits/client-habits-home-widget";
 import { Button } from "@/components/ui/button";
+import type { ClientHabitsSummary } from "@/lib/habits/types";
 import type { ClientSchedulePayload } from "@/lib/sessions/types";
 import { cn } from "@/lib/utils";
 
 type ClientHomeContentProps = {
   schedule: ClientSchedulePayload;
+  habitsSummary?: ClientHabitsSummary | null;
 };
 
-export function ClientHomeContent({ schedule }: ClientHomeContentProps) {
+export function ClientHomeContent({
+  schedule,
+  habitsSummary,
+}: ClientHomeContentProps) {
   const todayKey = [
     new Date().getFullYear(),
     String(new Date().getMonth() + 1).padStart(2, "0"),
@@ -53,6 +59,10 @@ export function ClientHomeContent({ schedule }: ClientHomeContentProps) {
   return (
     <div className="mx-auto max-w-4xl space-y-8">
       <ClientPendingAssessmentBanner />
+
+      {habitsSummary ? (
+        <ClientHabitsHomeWidget summary={habitsSummary} />
+      ) : null}
 
       <header className="space-y-2">
         <p className="text-caption-uppercase text-primary tracking-widest uppercase">

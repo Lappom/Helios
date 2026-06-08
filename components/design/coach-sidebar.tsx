@@ -5,6 +5,7 @@ import {
   Apple,
   ClipboardList,
   Dumbbell,
+  Flame,
   LayoutDashboard,
   Library,
   Menu,
@@ -40,6 +41,7 @@ const navItems: NavItem[] = [
   { href: "/coach/nutrition", label: "Nutrition", icon: Apple },
   { href: "/coach/messages", label: "Messages", icon: MessageSquare },
   { href: "/coach/assessments", label: "Bilans", icon: ClipboardList },
+  { href: "/coach/habits", label: "Habitudes", icon: Flame },
   { href: "/coach/boutique", label: "Boutique", icon: Store },
   { href: "/coach/settings", label: "Settings", icon: Settings },
 ];

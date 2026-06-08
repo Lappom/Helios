@@ -103,3 +103,14 @@ export const feedbackQuestionTypeEnum = pgEnum("feedback_question_type", [
   "text",
   "boolean",
 ]);
+
+export const habitFrequencyEnum = pgEnum("habit_frequency", [
+  "daily",
+  "weekly",
+]);
+
+export const habitAssignmentStatusEnum = pgEnum("habit_assignment_status", [
+  "active",
+  "paused",
+  "completed",
+]);

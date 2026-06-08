@@ -3,6 +3,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Apple,
+  Flame,
   Home,
   MessageSquare,
   TrendingUp,
@@ -10,6 +11,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Show } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -17,12 +19,14 @@ type NavItem = {
   label: string;
   icon: LucideIcon;
   exact?: boolean;
+  feature?: string;
 };
 
 const navItems: NavItem[] = [
   { href: "/client", label: "Accueil", icon: Home, exact: true },
   { href: "/client/program", label: "Programme", icon: Dumbbell },
   { href: "/client/nutrition", label: "Nutrition", icon: Apple },
+  { href: "/client/habits", label: "Habitudes", icon: Flame, feature: "habits" },
   { href: "/client/progress", label: "Progrès", icon: TrendingUp },
   { href: "/client/messages", label: "Messages", icon: MessageSquare },
 ];
@@ -87,16 +91,28 @@ export function ClientNav() {
           <p className="text-body-sm text-muted mt-1">Portail client</p>
         </div>
         <nav className="flex flex-col gap-1 p-3">
-          {navItems.map((item) => (
-            <NavLink key={item.href} item={item} variant="sidebar" />
-          ))}
+          {navItems.map((item) =>
+            item.feature ? (
+              <Show key={item.href} when={{ feature: item.feature }}>
+                <NavLink item={item} variant="sidebar" />
+              </Show>
+            ) : (
+              <NavLink key={item.href} item={item} variant="sidebar" />
+            ),
+          )}
         </nav>
       </aside>
 
       <nav className="border-hairline bg-surface-card fixed inset-x-0 bottom-0 z-50 flex border-t md:hidden">
-        {navItems.map((item) => (
-          <NavLink key={item.href} item={item} variant="bottom" />
-        ))}
+        {navItems.map((item) =>
+          item.feature ? (
+            <Show key={item.href} when={{ feature: item.feature }}>
+              <NavLink item={item} variant="bottom" />
+            </Show>
+          ) : (
+            <NavLink key={item.href} item={item} variant="bottom" />
+          ),
+        )}
       </nav>
     </>
   );
