@@ -51,10 +51,11 @@ export async function checkQuota(quota: QuotaType): Promise<QuotaCheckResult> {
     },
   });
 
-  const usedMap = {
+  const usedMap: Record<QuotaType, number> = {
     clients: subscription?.activeClientCount ?? 0,
     ai: subscription?.aiCreditsUsed ?? 0,
     notifications: subscription?.notificationsSent ?? 0,
+    exerciseVideo: 0,
   };
 
   const limit = getPlanLimit(orgContext.planTier, quota);

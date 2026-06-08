@@ -7,6 +7,13 @@ import {
   clientTags,
 } from "./clients";
 import {
+  exerciseAliases,
+  exerciseCategories,
+  exerciseFavorites,
+  exerciseHidden,
+  exercises,
+} from "./exercises";
+import {
   organizations,
   subscriptions,
   teamMembers,
@@ -15,6 +22,7 @@ import {
 export * from "./enums";
 export * from "./organization";
 export * from "./clients";
+export * from "./exercises";
 
 export const organizationsRelations = relations(
   organizations,
@@ -26,6 +34,8 @@ export const organizationsRelations = relations(
     clients: many(clients),
     teamMembers: many(teamMembers),
     clientTags: many(clientTags),
+    exerciseCategories: many(exerciseCategories),
+    exercises: many(exercises),
   }),
 );
 
@@ -101,5 +111,69 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
   organization: one(organizations, {
     fields: [teamMembers.organizationId],
     references: [organizations.id],
+  }),
+}));
+
+export const exerciseCategoriesRelations = relations(
+  exerciseCategories,
+  ({ one, many }) => ({
+    organization: one(organizations, {
+      fields: [exerciseCategories.organizationId],
+      references: [organizations.id],
+    }),
+    exercises: many(exercises),
+  }),
+);
+
+export const exercisesRelations = relations(exercises, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [exercises.organizationId],
+    references: [organizations.id],
+  }),
+  category: one(exerciseCategories, {
+    fields: [exercises.categoryId],
+    references: [exerciseCategories.id],
+  }),
+  favorites: many(exerciseFavorites),
+  aliases: many(exerciseAliases),
+  hidden: many(exerciseHidden),
+}));
+
+export const exerciseFavoritesRelations = relations(
+  exerciseFavorites,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [exerciseFavorites.organizationId],
+      references: [organizations.id],
+    }),
+    exercise: one(exercises, {
+      fields: [exerciseFavorites.exerciseId],
+      references: [exercises.id],
+    }),
+  }),
+);
+
+export const exerciseAliasesRelations = relations(
+  exerciseAliases,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [exerciseAliases.organizationId],
+      references: [organizations.id],
+    }),
+    exercise: one(exercises, {
+      fields: [exerciseAliases.exerciseId],
+      references: [exercises.id],
+    }),
+  }),
+);
+
+export const exerciseHiddenRelations = relations(exerciseHidden, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [exerciseHidden.organizationId],
+    references: [organizations.id],
+  }),
+  exercise: one(exercises, {
+    fields: [exerciseHidden.exerciseId],
+    references: [exercises.id],
   }),
 }));

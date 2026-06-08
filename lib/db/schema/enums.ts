@@ -28,3 +28,15 @@ export const teamMemberRoleEnum = pgEnum("team_member_role", [
   "coach",
   "assistant",
 ]);
+
+export const exerciseTypeEnum = pgEnum("exercise_type", [
+  "strength",
+  "cardio",
+  "mobility",
+  "plyometric",
+]);
+
+export const exerciseSourceEnum = pgEnum("exercise_source", [
+  "system",
+  "custom",
+]);

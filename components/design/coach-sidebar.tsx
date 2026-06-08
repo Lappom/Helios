@@ -6,6 +6,7 @@ import {
   ClipboardList,
   Dumbbell,
   LayoutDashboard,
+  Library,
   Menu,
   MessageSquare,
   Settings,
@@ -34,6 +35,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/coach", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/coach/clients", label: "Clients", icon: Users },
+  { href: "/coach/exercises", label: "Exercices", icon: Library },
   { href: "/coach/programs", label: "Programmes", icon: Dumbbell },
   { href: "/coach/nutrition", label: "Nutrition", icon: Apple },
   { href: "/coach/messages", label: "Messages", icon: MessageSquare },

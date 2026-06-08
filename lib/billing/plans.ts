@@ -1,7 +1,7 @@
 import type { PlanTier } from "@/lib/auth/types";
 import type { subscriptionStatusEnum } from "@/lib/db/schema/enums";
 
-export type QuotaType = "clients" | "ai" | "notifications";
+export type QuotaType = "clients" | "ai" | "notifications" | "exerciseVideo";
 
 export type SubscriptionStatus =
   (typeof subscriptionStatusEnum.enumValues)[number];
@@ -10,13 +10,19 @@ export const PLAN_LIMITS: Record<
   PlanTier,
   Record<QuotaType, number>
 > = {
-  STARTER: { clients: 5, ai: 500, notifications: 200 },
-  PRO: { clients: 50, ai: 5000, notifications: 1000 },
-  BUSINESS: { clients: 500, ai: 10000, notifications: 5000 },
+  STARTER: { clients: 5, ai: 500, notifications: 200, exerciseVideo: 250 * 1024 * 1024 },
+  PRO: { clients: 50, ai: 5000, notifications: 1000, exerciseVideo: 500 * 1024 * 1024 },
+  BUSINESS: {
+    clients: 500,
+    ai: 10000,
+    notifications: 5000,
+    exerciseVideo: 1024 * 1024 * 1024,
+  },
   TEAM: {
     clients: Number.POSITIVE_INFINITY,
     ai: Number.POSITIVE_INFINITY,
     notifications: Number.POSITIVE_INFINITY,
+    exerciseVideo: 2 * 1024 * 1024 * 1024,
   },
 };
 
@@ -46,6 +52,10 @@ export function mapClerkSubscriptionStatus(status: string): SubscriptionStatus {
 
 export function getPlanLimit(planTier: PlanTier, quota: QuotaType): number {
   return PLAN_LIMITS[planTier][quota];
+}
+
+export function getExerciseVideoLimitMb(planTier: PlanTier): number {
+  return Math.round(getPlanLimit(planTier, "exerciseVideo") / (1024 * 1024));
 }
 
 export const CLERK_FEATURE_SLUGS = [
