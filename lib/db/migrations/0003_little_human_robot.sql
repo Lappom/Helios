@@ -85,9 +85,6 @@ CREATE TABLE "set_prescriptions" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-ALTER TABLE "exercises" ALTER COLUMN "search_vector" SET DEFAULT '';--> statement-breakpoint
-ALTER TABLE "exercises" ALTER COLUMN "search_vector" SET NOT NULL;--> statement-breakpoint
-ALTER TABLE "exercises" ALTER COLUMN "search_vector" DROP EXPRESSION;--> statement-breakpoint
 ALTER TABLE "block_exercise_alternatives" ADD CONSTRAINT "block_exercise_alternatives_organization_id_organizations_id_fk" FOREIGN KEY ("organization_id") REFERENCES "public"."organizations"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "block_exercise_alternatives" ADD CONSTRAINT "block_exercise_alternatives_block_exercise_id_block_exercises_id_fk" FOREIGN KEY ("block_exercise_id") REFERENCES "public"."block_exercises"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "block_exercise_alternatives" ADD CONSTRAINT "block_exercise_alternatives_exercise_id_exercises_id_fk" FOREIGN KEY ("exercise_id") REFERENCES "public"."exercises"("id") ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
