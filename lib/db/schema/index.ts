@@ -59,6 +59,7 @@ import {
   blockedDates,
   bookings,
 } from "./bookings";
+import { promoCodes } from "./promo-codes";
 
 export * from "./enums";
 export * from "./organization";
@@ -74,6 +75,7 @@ export * from "./session-feedback";
 export * from "./habits";
 export * from "./coach-profiles";
 export * from "./bookings";
+export * from "./promo-codes";
 
 export const organizationsRelations = relations(
   organizations,
@@ -103,6 +105,7 @@ export const organizationsRelations = relations(
     availabilityRules: many(availabilityRules),
     blockedDates: many(blockedDates),
     bookings: many(bookings),
+    promoCodes: many(promoCodes),
   }),
 );
 
@@ -796,6 +799,10 @@ export const coachServicesRelations = relations(coachServices, ({ one, many }) =
     fields: [coachServices.profileId],
     references: [coachProfiles.id],
   }),
+  defaultProgram: one(programs, {
+    fields: [coachServices.defaultProgramId],
+    references: [programs.id],
+  }),
   bookings: many(bookings),
 }));
 
@@ -829,4 +836,16 @@ export const bookingsRelations = relations(bookings, ({ one }) => ({
     fields: [bookings.clientId],
     references: [clients.id],
   }),
+  promoCode: one(promoCodes, {
+    fields: [bookings.promoCodeId],
+    references: [promoCodes.id],
+  }),
+}));
+
+export const promoCodesRelations = relations(promoCodes, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [promoCodes.organizationId],
+    references: [organizations.id],
+  }),
+  bookings: many(bookings),
 }));

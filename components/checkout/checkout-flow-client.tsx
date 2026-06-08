@@ -1,7 +1,7 @@
 "use client";
 
 import { useUser } from "@clerk/nextjs";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -9,9 +9,10 @@ import { PricingTierCard } from "@/components/design/pricing-tier-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  createBookingRequest,
-  fetchAvailableSlots,
-} from "@/lib/bookings/api-client";
+  completeCheckoutRequest,
+  validatePromoCodeRequest,
+} from "@/lib/checkout/api-client";
+import { fetchAvailableSlots } from "@/lib/bookings/api-client";
 import type { BookingSlotDto } from "@/lib/bookings/types";
 import type { CoachServiceDto } from "@/lib/coach-profile/service";
 import { formatPriceCents } from "@/lib/validators/coach-profile";
@@ -24,10 +25,11 @@ import {
 } from "@/lib/programs/calendar-utils";
 import { cn } from "@/lib/utils";
 
-type BookingFlowClientProps = {
+type CheckoutFlowClientProps = {
   coachSlug: string;
   coachName: string;
   service: CoachServiceDto;
+  backHref?: string;
 };
 
 type Step = "slots" | "confirm" | "success";
@@ -49,13 +51,16 @@ function formatSlotDate(iso: string): string {
   });
 }
 
-export function BookingFlowClient({
+export function CheckoutFlowClient({
   coachSlug,
   coachName,
   service,
-}: BookingFlowClientProps) {
+  backHref,
+}: CheckoutFlowClientProps) {
+  const profileHref = backHref ?? `/find/coaches/${coachSlug}`;
   const { user } = useUser();
-  const [step, setStep] = useState<Step>("slots");
+  const needsSlot = service.bookingEnabled;
+  const [step, setStep] = useState<Step>(needsSlot ? "slots" : "confirm");
   const [anchorDate, setAnchorDate] = useState(() =>
     startOfWeekMonday(new Date()),
   );
@@ -64,8 +69,16 @@ export function BookingFlowClient({
   const [selectedSlot, setSelectedSlot] = useState<BookingSlotDto | null>(null);
   const [prospectName, setProspectName] = useState("");
   const [prospectEmail, setProspectEmail] = useState("");
+  const [promoCode, setPromoCode] = useState("");
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [discountCents, setDiscountCents] = useState(0);
+  const [finalPriceCents, setFinalPriceCents] = useState(service.priceCents);
+  const [validatingPromo, setValidatingPromo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [confirmedStartAt, setConfirmedStartAt] = useState<string | null>(null);
+  const [paymentInstructions, setPaymentInstructions] = useState<
+    string | null
+  >(service.paymentInstructions);
 
   const weekDays = useMemo(() => getWeekDays(anchorDate), [anchorDate]);
 
@@ -81,6 +94,7 @@ export function BookingFlowClient({
   }, [slots]);
 
   const loadSlots = useCallback(async () => {
+    if (!needsSlot) return;
     setLoadingSlots(true);
     try {
       const from = formatDayKey(weekDays[0]!);
@@ -96,7 +110,7 @@ export function BookingFlowClient({
     } finally {
       setLoadingSlots(false);
     }
-  }, [service.id, weekDays]);
+  }, [needsSlot, service.id, weekDays]);
 
   useEffect(() => {
     void loadSlots();
@@ -111,36 +125,72 @@ export function BookingFlowClient({
     }
   }, [user]);
 
-  async function handleConfirm() {
-    if (!selectedSlot) return;
+  async function handleApplyPromo() {
+    if (!promoCode.trim()) return;
+    setValidatingPromo(true);
+    try {
+      const result = await validatePromoCodeRequest({
+        serviceId: service.id,
+        code: promoCode.trim(),
+      });
+      if (!result.valid) {
+        setPromoApplied(false);
+        setDiscountCents(0);
+        setFinalPriceCents(service.priceCents);
+        toast.error(result.reason ?? "Code promo invalide");
+        return;
+      }
+      setPromoApplied(true);
+      setDiscountCents(result.discountCents);
+      setFinalPriceCents(result.finalPriceCents);
+      toast.success("Code promo appliqué");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Validation impossible",
+      );
+    } finally {
+      setValidatingPromo(false);
+    }
+  }
 
-    if (!user && !prospectEmail.trim()) {
+  async function handleConfirm() {
+    if (needsSlot && !selectedSlot) return;
+
+    if (!prospectEmail.trim()) {
       toast.error("Indiquez votre email");
+      return;
+    }
+    if (!prospectName.trim()) {
+      toast.error("Indiquez votre nom");
       return;
     }
 
     setSubmitting(true);
     try {
-      await createBookingRequest({
+      const result = await completeCheckoutRequest({
         serviceId: service.id,
-        startAt: selectedSlot.startAt,
-        prospectEmail: prospectEmail.trim() || undefined,
-        prospectName: prospectName.trim() || undefined,
+        startAt: selectedSlot?.startAt,
+        prospectEmail: prospectEmail.trim(),
+        prospectName: prospectName.trim(),
+        promoCode: promoApplied ? promoCode.trim() : undefined,
       });
-      setConfirmedStartAt(selectedSlot.startAt);
+      setConfirmedStartAt(selectedSlot?.startAt ?? null);
+      setFinalPriceCents(result.finalPriceCents);
+      setDiscountCents(result.discountCents);
+      setPaymentInstructions(result.paymentInstructions);
       setStep("success");
-      toast.success("Rendez-vous confirmé");
+      toast.success("Commande confirmée");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Réservation impossible",
+        error instanceof Error ? error.message : "Checkout impossible",
       );
-      void loadSlots();
+      if (needsSlot) void loadSlots();
     } finally {
       setSubmitting(false);
     }
   }
 
-  if (step === "success" && confirmedStartAt) {
+  if (step === "success") {
     return (
       <div className="py-section mx-auto max-w-lg px-6 text-center">
         <div className="border-hairline bg-surface-card animate-in fade-in zoom-in-95 rounded-lg border p-10 duration-500">
@@ -153,17 +203,39 @@ export function BookingFlowClient({
           <p className="text-body-md text-muted mb-2">
             {service.name} avec {coachName}
           </p>
-          <p className="text-title-md text-on-dark mb-8 font-semibold">
-            {formatSlotDate(confirmedStartAt)} à{" "}
-            {formatSlotTime(confirmedStartAt)}
+          {confirmedStartAt ? (
+            <p className="text-title-md text-on-dark mb-4 font-semibold">
+              {formatSlotDate(confirmedStartAt)} à{" "}
+              {formatSlotTime(confirmedStartAt)}
+            </p>
+          ) : null}
+          <p className="text-stat-display text-primary mb-6 font-bold tracking-tight">
+            {formatPriceCents(finalPriceCents, service.currency)}
+            {discountCents > 0 ? (
+              <span className="text-body-sm text-muted ml-2 line-through">
+                {formatPriceCents(service.priceCents, service.currency)}
+              </span>
+            ) : null}
+          </p>
+          {paymentInstructions ? (
+            <div className="bg-surface-yellow-band text-on-yellow mb-6 rounded-lg p-6 text-left">
+              <p className="text-caption-uppercase mb-2 tracking-widest uppercase">
+                Modalités de paiement
+              </p>
+              <p className="text-body-md whitespace-pre-wrap">
+                {paymentInstructions}
+              </p>
+            </div>
+          ) : null}
+          <p className="text-body-sm text-muted mb-8">
+            Un email d&apos;invitation au portail client vous sera envoyé si
+            c&apos;est votre première commande.
           </p>
           <Button
             asChild
             className="bg-primary text-on-primary hover:bg-primary-active"
           >
-            <Link href={`/find/coaches/${coachSlug}`}>
-              Retour au profil
-            </Link>
+            <Link href={profileHref}>Retour au profil</Link>
           </Button>
         </div>
       </div>
@@ -174,16 +246,12 @@ export function BookingFlowClient({
     <div className="py-section mx-auto max-w-5xl px-6">
       <div className="mb-8">
         <Button variant="ghost" asChild className="mb-4">
-          <Link href={`/find/coaches/${coachSlug}`}>
-            ← Retour au profil
-          </Link>
+          <Link href={profileHref}>← Retour</Link>
         </Button>
         <h1 className="text-display-sm text-on-dark font-bold tracking-tight">
-          Réserver — {service.name}
+          Checkout — {service.name}
         </h1>
-        <p className="text-body-md text-muted mt-2">
-          avec {coachName}
-        </p>
+        <p className="text-body-md text-muted mt-2">avec {coachName}</p>
       </div>
 
       <div className="mb-10 max-w-sm">
@@ -195,6 +263,7 @@ export function BookingFlowClient({
           features={[
             `${service.durationMinutes} minutes`,
             service.isOnline ? "En ligne" : "En présentiel",
+            needsSlot ? "Réservation en ligne" : "Sans rendez-vous",
           ]}
           hideCta
           className="pointer-events-none"
@@ -212,9 +281,7 @@ export function BookingFlowClient({
                 variant="outline"
                 size="icon"
                 className="border-hairline"
-                onClick={() =>
-                  setAnchorDate((d) => addDays(d, -7))
-                }
+                onClick={() => setAnchorDate((d) => addDays(d, -7))}
               >
                 <ChevronLeft className="size-4" />
               </Button>
@@ -222,9 +289,7 @@ export function BookingFlowClient({
                 variant="outline"
                 size="icon"
                 className="border-hairline"
-                onClick={() =>
-                  setAnchorDate((d) => addDays(d, 7))
-                }
+                onClick={() => setAnchorDate((d) => addDays(d, 7))}
               >
                 <ChevronRight className="size-4" />
               </Button>
@@ -284,52 +349,96 @@ export function BookingFlowClient({
         </div>
       ) : null}
 
-      {step === "confirm" && selectedSlot ? (
+      {step === "confirm" ? (
         <div className="border-hairline bg-surface-card mx-auto max-w-md animate-in fade-in slide-in-from-bottom-4 rounded-lg border p-8 duration-300">
           <h2 className="text-title-lg text-on-dark mb-4 font-semibold">
-            Confirmer la réservation
+            Confirmer votre commande
           </h2>
-          <p className="text-body-md text-muted mb-6">
-            {formatSlotDate(selectedSlot.startAt)} à{" "}
-            {formatSlotTime(selectedSlot.startAt)}
-          </p>
-
-          {!user ? (
-            <div className="mb-4 space-y-3">
-              <Input
-                placeholder="Votre nom"
-                value={prospectName}
-                onChange={(e) => setProspectName(e.target.value)}
-                className="bg-surface-elevated border-hairline"
-              />
-              <Input
-                type="email"
-                placeholder="Votre email"
-                value={prospectEmail}
-                onChange={(e) => setProspectEmail(e.target.value)}
-                className="bg-surface-elevated border-hairline"
-                required
-              />
-            </div>
-          ) : (
+          {selectedSlot ? (
             <p className="text-body-md text-muted mb-6">
-              Réservation en tant que{" "}
-              <span className="text-on-dark">{prospectEmail}</span>
+              {formatSlotDate(selectedSlot.startAt)} à{" "}
+              {formatSlotTime(selectedSlot.startAt)}
             </p>
-          )}
+          ) : null}
+
+          <div className="mb-4 space-y-3">
+            <Input
+              placeholder="Votre nom"
+              value={prospectName}
+              onChange={(e) => setProspectName(e.target.value)}
+              className="bg-surface-elevated border-hairline"
+            />
+            <Input
+              type="email"
+              placeholder="Votre email"
+              value={prospectEmail}
+              onChange={(e) => setProspectEmail(e.target.value)}
+              className="bg-surface-elevated border-hairline"
+              required
+            />
+          </div>
+
+          <div className="mb-6 space-y-2">
+            <label className="text-title-sm text-on-dark flex items-center gap-2 font-semibold">
+              <Tag className="size-4" />
+              Code promo
+            </label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="PROMO2026"
+                value={promoCode}
+                onChange={(e) => {
+                  setPromoCode(e.target.value.toUpperCase());
+                  setPromoApplied(false);
+                }}
+                className="bg-surface-elevated border-hairline uppercase"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="border-hairline shrink-0"
+                disabled={validatingPromo || !promoCode.trim()}
+                onClick={() => void handleApplyPromo()}
+              >
+                {validatingPromo ? "…" : "Appliquer"}
+              </Button>
+            </div>
+          </div>
+
+          <div className="border-hairline mb-6 flex items-baseline justify-between border-t pt-4">
+            <span className="text-body-md text-muted">Total</span>
+            <div className="text-right">
+              <p className="text-title-lg text-primary font-bold">
+                {formatPriceCents(finalPriceCents, service.currency)}
+              </p>
+              {discountCents > 0 ? (
+                <p className="text-body-sm text-muted line-through">
+                  {formatPriceCents(service.priceCents, service.currency)}
+                </p>
+              ) : null}
+            </div>
+          </div>
+
+          {service.paymentInstructions ? (
+            <p className="text-body-sm text-muted mb-6">
+              {service.paymentInstructions}
+            </p>
+          ) : null}
 
           <div className="flex gap-3">
-            <Button
-              variant="outline"
-              className="border-hairline flex-1"
-              onClick={() => setStep("slots")}
-            >
-              Retour
-            </Button>
+            {needsSlot ? (
+              <Button
+                variant="outline"
+                className="border-hairline flex-1"
+                onClick={() => setStep("slots")}
+              >
+                Retour
+              </Button>
+            ) : null}
             <Button
               className="bg-primary text-on-primary hover:bg-primary-active flex-1"
               disabled={submitting}
-              onClick={handleConfirm}
+              onClick={() => void handleConfirm()}
             >
               {submitting ? "Confirmation…" : "Confirmer"}
             </Button>

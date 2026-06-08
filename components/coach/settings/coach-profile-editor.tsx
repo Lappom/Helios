@@ -7,22 +7,11 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type {
   CoachProfileDto,
   CoachServiceDto,
 } from "@/lib/coach-profile/service";
-import {
-  COACH_SERVICE_TYPES,
-  formatPriceCents,
-  type CoachServiceType,
-} from "@/lib/validators/coach-profile";
+import { formatPriceCents } from "@/lib/validators/coach-profile";
 import { slugifyName } from "@/lib/utils/slug";
 
 type CoachProfileEditorProps = {
@@ -94,29 +83,15 @@ function TagsInput({
   );
 }
 
-const SERVICE_TYPE_LABELS: Record<CoachServiceType, string> = {
-  assessment: "Bilan",
-  coaching: "Coaching",
-  call: "Appel",
-};
-
 export function CoachProfileEditor({
   initialProfile,
   initialServices,
 }: CoachProfileEditorProps) {
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [profile, setProfile] = useState(initialProfile);
-  const [services, setServices] = useState(initialServices);
+  const services = initialServices;
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
-  const [serviceDraft, setServiceDraft] = useState({
-    name: "",
-    description: "",
-    durationMinutes: 60,
-    priceCents: 5000,
-    type: "coaching" as CoachServiceType,
-    isOnline: false,
-  });
 
   async function saveProfile(partial?: Partial<typeof profile>) {
     setSaving(true);
@@ -184,66 +159,6 @@ export function CoachProfileEditor({
     } finally {
       setUploadingPhoto(false);
       if (photoInputRef.current) photoInputRef.current.value = "";
-    }
-  }
-
-  async function handleAddService() {
-    if (!serviceDraft.name.trim()) {
-      toast.error("Le nom de la prestation est requis.");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/v1/services", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: serviceDraft.name.trim(),
-          description: serviceDraft.description.trim() || undefined,
-          durationMinutes: serviceDraft.durationMinutes,
-          priceCents: serviceDraft.priceCents,
-          type: serviceDraft.type,
-          isOnline: serviceDraft.isOnline,
-        }),
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error(data.detail ?? data.title ?? "Création impossible.");
-        return;
-      }
-
-      setServices((current) => [...current, data]);
-      setServiceDraft({
-        name: "",
-        description: "",
-        durationMinutes: 60,
-        priceCents: 5000,
-        type: "coaching",
-        isOnline: false,
-      });
-      toast.success("Prestation ajoutée.");
-    } catch {
-      toast.error("Erreur réseau.");
-    }
-  }
-
-  async function handleDeleteService(serviceId: string) {
-    try {
-      const response = await fetch(`/api/v1/services/${serviceId}`, {
-        method: "DELETE",
-      });
-      const data = await response.json();
-
-      if (!response.ok) {
-        toast.error(data.detail ?? data.title ?? "Suppression impossible.");
-        return;
-      }
-
-      setServices((current) => current.filter((service) => service.id !== serviceId));
-      toast.success("Prestation supprimée.");
-    } catch {
-      toast.error("Erreur réseau.");
     }
   }
 
@@ -430,132 +345,29 @@ export function CoachProfileEditor({
         ))}
       </section>
 
-      <section className="border-hairline bg-surface-card space-y-6 rounded-lg border p-6">
+      <section className="border-hairline bg-surface-card space-y-4 rounded-lg border p-6">
         <h2 className="text-title-md text-on-dark font-semibold">Prestations</h2>
-
+        <p className="text-body-sm text-muted">
+          {services.length > 0
+            ? `${services.length} prestation${services.length > 1 ? "s" : ""} configurée${services.length > 1 ? "s" : ""} — tarifs, codes promo et checkout dans la boutique.`
+            : "Aucune prestation. Créez vos offres vendables dans la boutique."}
+        </p>
         {services.length > 0 ? (
-          <ul className="space-y-3">
-            {services.map((service) => (
-              <li
-                key={service.id}
-                className="border-hairline bg-surface-elevated flex items-center justify-between gap-3 rounded-lg border p-4"
-              >
-                <div>
-                  <p className="text-on-dark font-semibold">{service.name}</p>
-                  <p className="text-body-sm text-muted">
-                    {formatPriceCents(service.priceCents, service.currency)} ·{" "}
-                    {service.durationMinutes} min ·{" "}
-                    {SERVICE_TYPE_LABELS[service.type]}
-                    {service.isOnline ? " · En ligne" : " · Présentiel"}
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteService(service.id)}
-                >
-                  Supprimer
-                </Button>
+          <ul className="text-body-sm text-muted space-y-1">
+            {services.slice(0, 5).map((service) => (
+              <li key={service.id}>
+                {service.name} —{" "}
+                {formatPriceCents(service.priceCents, service.currency)}
               </li>
             ))}
+            {services.length > 5 ? (
+              <li>… et {services.length - 5} autre(s)</li>
+            ) : null}
           </ul>
-        ) : (
-          <p className="text-body-sm text-muted">
-            Aucune prestation. Ajoutez-en une ci-dessous.
-          </p>
-        )}
-
-        <div className="border-hairline space-y-4 rounded-lg border border-dashed p-4">
-          <p className="text-title-sm text-on-dark font-semibold">
-            Nouvelle prestation
-          </p>
-          <Input
-            value={serviceDraft.name}
-            onChange={(event) =>
-              setServiceDraft((current) => ({
-                ...current,
-                name: event.target.value,
-              }))
-            }
-            placeholder="Séance découverte"
-          />
-          <textarea
-            value={serviceDraft.description}
-            onChange={(event) =>
-              setServiceDraft((current) => ({
-                ...current,
-                description: event.target.value,
-              }))
-            }
-            rows={2}
-            className="border-hairline bg-surface-elevated text-body-md text-on-dark w-full rounded-lg border px-3 py-2 outline-none"
-            placeholder="Description courte (optionnel)"
-          />
-          <div className="grid gap-3 sm:grid-cols-3">
-            <Input
-              type="number"
-              min={15}
-              max={480}
-              value={serviceDraft.durationMinutes}
-              onChange={(event) =>
-                setServiceDraft((current) => ({
-                  ...current,
-                  durationMinutes: Number(event.target.value),
-                }))
-              }
-              placeholder="Durée (min)"
-            />
-            <Input
-              type="number"
-              min={0}
-              step={100}
-              value={serviceDraft.priceCents / 100}
-              onChange={(event) =>
-                setServiceDraft((current) => ({
-                  ...current,
-                  priceCents: Math.round(Number(event.target.value) * 100),
-                }))
-              }
-              placeholder="Prix TTC (€)"
-            />
-            <Select
-              value={serviceDraft.type}
-              onValueChange={(value) =>
-                setServiceDraft((current) => ({
-                  ...current,
-                  type: value as CoachServiceType,
-                }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {COACH_SERVICE_TYPES.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {SERVICE_TYPE_LABELS[type]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <label className="text-body-sm text-body flex items-center gap-2">
-            <Checkbox
-              checked={serviceDraft.isOnline}
-              onCheckedChange={(checked) =>
-                setServiceDraft((current) => ({
-                  ...current,
-                  isOnline: checked === true,
-                }))
-              }
-            />
-            Séance en ligne
-          </label>
-          <Button type="button" variant="outline" onClick={handleAddService}>
-            Ajouter la prestation
-          </Button>
-        </div>
+        ) : null}
+        <Button variant="outline" asChild>
+          <Link href="/coach/boutique">Gérer dans Boutique</Link>
+        </Button>
       </section>
 
       <section className="border-hairline bg-surface-card space-y-6 rounded-lg border p-6">

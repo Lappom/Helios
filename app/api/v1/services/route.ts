@@ -16,7 +16,9 @@ export const GET = withApiHandler({ requireOrg: true }, async () => {
   return jsonOk({ items: services });
 });
 
-export const POST = withApiHandler({ requireOrg: true }, async ({ request }) => {
+export const POST = withApiHandler(
+  { requireOrg: true, requireFeature: "shop" },
+  async ({ request }) => {
   const org = await requireCoachWrite();
   const body = await parseJsonBody(createCoachServiceSchema, request);
   const service = await createService(
@@ -25,4 +27,5 @@ export const POST = withApiHandler({ requireOrg: true }, async ({ request }) => 
     body,
   );
   return jsonOk(service, { status: 201 });
-});
+  },
+);

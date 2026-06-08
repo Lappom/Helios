@@ -11,6 +11,7 @@ import {
 import { createId } from "../id";
 import { coachServiceTypeEnum } from "./enums";
 import { organizations } from "./organization";
+import { programs } from "./programs";
 
 export type CoachSocialLinks = {
   instagram?: string;
@@ -95,6 +96,9 @@ export const coachServices = pgTable(
     isOnline: boolean("is_online").notNull().default(false),
     bookingEnabled: boolean("booking_enabled").notNull().default(false),
     paymentInstructions: text("payment_instructions"),
+    defaultProgramId: text("default_program_id").references(() => programs.id, {
+      onDelete: "set null",
+    }),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

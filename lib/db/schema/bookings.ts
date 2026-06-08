@@ -12,6 +12,7 @@ import {
 import { createId } from "../id";
 import { coachServices } from "./coach-profiles";
 import { clients } from "./clients";
+import { promoCodes } from "./promo-codes";
 import {
   bookingPaymentStatusEnum,
   bookingStatusEnum,
@@ -117,6 +118,11 @@ export const bookings = pgTable(
     paymentStatus: bookingPaymentStatusEnum("payment_status")
       .notNull()
       .default("unpaid"),
+    promoCodeId: text("promo_code_id").references(() => promoCodes.id, {
+      onDelete: "set null",
+    }),
+    discountCents: integer("discount_cents"),
+    finalPriceCents: integer("final_price_cents"),
     notes: text("notes"),
     cancellationReason: text("cancellation_reason"),
     remindersSent: jsonb("reminders_sent")

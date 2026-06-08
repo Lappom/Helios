@@ -266,6 +266,18 @@ export function buildClientTimeline(detail: ClientDetail): TimelineEntry[] {
   );
 }
 
+export async function findClientByEmail(
+  organizationId: string,
+  email: string,
+) {
+  return db.query.clients.findFirst({
+    where: and(
+      eq(clients.organizationId, organizationId),
+      eq(clients.email, email.toLowerCase()),
+    ),
+  });
+}
+
 export async function createClient(
   organizationId: string,
   planTier: PlanTier,

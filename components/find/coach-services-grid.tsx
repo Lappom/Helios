@@ -63,15 +63,9 @@ export function CoachServicesGrid({
                     : "Contact direct",
                 ]}
                 featured={index === 0}
-                ctaLabel={
-                  service.bookingEnabled && coachSlug ? "Réserver" : "Bientôt"
-                }
-                ctaHref={
-                  service.bookingEnabled && coachSlug
-                    ? `/find/coaches/${coachSlug}/book/${service.id}`
-                    : undefined
-                }
-                hideCta={!service.bookingEnabled || !coachSlug}
+                ctaLabel={service.bookingEnabled ? "Réserver" : "Commander"}
+                ctaHref={`/checkout/${service.id}`}
+                hideCta={!coachSlug}
                 className="h-full"
               />
             </div>

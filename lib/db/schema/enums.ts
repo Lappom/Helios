@@ -134,3 +134,8 @@ export const bookingPaymentStatusEnum = pgEnum("booking_payment_status", [
   "paid",
   "external",
 ]);
+
+export const promoDiscountTypeEnum = pgEnum("promo_discount_type", [
+  "percent",
+  "fixed",
+]);

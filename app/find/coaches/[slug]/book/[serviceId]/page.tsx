@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { BookingFlowClient } from "@/components/find/booking-flow-client";
+import { CheckoutFlowClient } from "@/components/checkout/checkout-flow-client";
 import { getPublicCoachBySlug } from "@/lib/coach-profile/service";
 
 type BookingPageProps = {
@@ -36,10 +36,11 @@ export default async function BookingPage({ params }: BookingPageProps) {
   }
 
   return (
-    <BookingFlowClient
+    <CheckoutFlowClient
       coachSlug={slug}
       coachName={coach.displayName}
       service={service}
+      backHref={`/find/coaches/${slug}`}
     />
   );
 }

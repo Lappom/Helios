@@ -56,6 +56,7 @@ export type CoachServiceDto = {
   isOnline: boolean;
   bookingEnabled: boolean;
   paymentInstructions: string | null;
+  defaultProgramId: string | null;
   sortOrder: number;
 };
 
@@ -109,6 +110,7 @@ function mapService(row: typeof coachServices.$inferSelect): CoachServiceDto {
     isOnline: row.isOnline,
     bookingEnabled: row.bookingEnabled,
     paymentInstructions: row.paymentInstructions,
+    defaultProgramId: row.defaultProgramId,
     sortOrder: row.sortOrder,
   };
 }
@@ -364,6 +366,36 @@ export async function listPublicCoaches(
   };
 }
 
+export type PublicServiceCheckoutContext = {
+  service: CoachServiceDto;
+  coachName: string;
+  coachSlug: string;
+};
+
+export async function getPublicServiceById(
+  serviceId: string,
+): Promise<PublicServiceCheckoutContext> {
+  const service = await db.query.coachServices.findFirst({
+    where: eq(coachServices.id, serviceId),
+    with: { profile: true },
+  });
+
+  if (!service?.profile?.isPublished) {
+    throw problem({
+      type: "not-found",
+      title: "Service not found",
+      status: 404,
+      detail: `No published service found for id "${serviceId}".`,
+    });
+  }
+
+  return {
+    service: mapService(service),
+    coachName: service.profile.displayName,
+    coachSlug: service.profile.slug,
+  };
+}
+
 export async function getPublicCoachBySlug(
   slug: string,
 ): Promise<PublicCoachDto> {
@@ -455,6 +487,7 @@ export async function createService(
       isOnline: input.isOnline ?? false,
       bookingEnabled: input.bookingEnabled ?? false,
       paymentInstructions: input.paymentInstructions ?? null,
+      defaultProgramId: input.defaultProgramId ?? null,
       sortOrder: input.sortOrder ?? 0,
     })
     .returning();
@@ -513,6 +546,9 @@ export async function patchService(
         : {}),
       ...(input.paymentInstructions !== undefined
         ? { paymentInstructions: input.paymentInstructions }
+        : {}),
+      ...(input.defaultProgramId !== undefined
+        ? { defaultProgramId: input.defaultProgramId }
         : {}),
       ...(input.sortOrder !== undefined ? { sortOrder: input.sortOrder } : {}),
     })

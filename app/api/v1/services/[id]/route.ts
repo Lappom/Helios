@@ -6,7 +6,9 @@ import { deleteService, patchService } from "@/lib/coach-profile/service";
 import { parseJsonBody } from "@/lib/validators/clients";
 import { patchCoachServiceSchema } from "@/lib/validators/coach-profile";
 
-export const PATCH = withApiHandler({ requireOrg: true }, async ({ request }) => {
+export const PATCH = withApiHandler(
+  { requireOrg: true, requireFeature: "shop" },
+  async ({ request }) => {
   const org = await requireCoachWrite();
   const id = getServiceIdFromPath(request);
 
@@ -27,9 +29,12 @@ export const PATCH = withApiHandler({ requireOrg: true }, async ({ request }) =>
     body,
   );
   return jsonOk(service);
-});
+  },
+);
 
-export const DELETE = withApiHandler({ requireOrg: true }, async ({ request }) => {
+export const DELETE = withApiHandler(
+  { requireOrg: true, requireFeature: "shop" },
+  async ({ request }) => {
   const org = await requireCoachWrite();
   const id = getServiceIdFromPath(request);
 
@@ -44,4 +49,5 @@ export const DELETE = withApiHandler({ requireOrg: true }, async ({ request }) =
 
   await deleteService(org.organizationId, org.clerkUserId, id);
   return jsonOk({ ok: true });
-});
+  },
+);

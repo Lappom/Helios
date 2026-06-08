@@ -64,6 +64,7 @@ export const createCoachServiceSchema = z.object({
   isOnline: z.boolean().default(false),
   bookingEnabled: z.boolean().default(false),
   paymentInstructions: z.string().trim().max(1000).optional(),
+  defaultProgramId: z.string().trim().min(1).nullable().optional(),
   sortOrder: z.number().int().min(0).max(999).optional(),
 });
 
@@ -80,6 +81,7 @@ export const patchCoachServiceSchema = z
     isOnline: z.boolean().optional(),
     bookingEnabled: z.boolean().optional(),
     paymentInstructions: z.string().trim().max(1000).nullable().optional(),
+    defaultProgramId: z.string().trim().min(1).nullable().optional(),
     sortOrder: z.number().int().min(0).max(999).optional(),
   })
   .refine((value) => Object.keys(value).length > 0, {
