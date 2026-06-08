@@ -74,3 +74,10 @@ export type AutomationTestResult = {
   clientId: string | null;
   previews: ActionPreview[];
 };
+
+export type AutomationTriggerPayload = {
+  organizationId: string;
+  clientId?: string;
+  triggerEventId: string;
+  metadata?: Record<string, unknown>;
+};

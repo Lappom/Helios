@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveTriggerEventId } from "./dispatcher";
+import { resolveTriggerEventId } from "./trigger-event-id";
 
 describe("resolveTriggerEventId", () => {
   it("uses payment id for payment_received", () => {

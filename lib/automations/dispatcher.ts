@@ -10,16 +10,12 @@ import {
 } from "@/lib/db/schema";
 import type { HeliosEventName, HeliosEventPayload } from "@/lib/events/types";
 import { resolveCoachClerkUserId } from "./service";
-import type { RunAutomationInput } from "./types";
+import type { AutomationTriggerPayload, RunAutomationInput } from "./types";
+import { resolveTriggerEventId } from "./trigger-event-id";
 import { runAutomationWorkflow } from "./workflows/run-automation";
 import type { AutomationTriggerType } from "@/lib/validators/automations";
 
-export type AutomationTriggerPayload = {
-  organizationId: string;
-  clientId?: string;
-  triggerEventId: string;
-  metadata?: Record<string, unknown>;
-};
+export type { AutomationTriggerPayload } from "./types";
 
 const EVENT_TO_TRIGGER: Partial<
   Record<HeliosEventName, AutomationTriggerType>
@@ -45,31 +41,7 @@ function isUniqueViolation(error: unknown): boolean {
   return message.includes("automation_executions_idempotency_idx");
 }
 
-export function resolveTriggerEventId(
-  triggerType: AutomationTriggerType,
-  payload: AutomationTriggerPayload,
-): string {
-  if (payload.triggerEventId) return payload.triggerEventId;
-
-  switch (triggerType) {
-    case "payment_received":
-      return String(payload.metadata?.paymentId ?? payload.clientId ?? "unknown");
-    case "client_created":
-      return String(payload.metadata?.clientId ?? payload.clientId ?? "unknown");
-    case "assessment_submitted":
-      return String(payload.metadata?.assessmentId ?? "unknown");
-    case "session_completed":
-      return String(payload.metadata?.sessionLogId ?? "unknown");
-    case "form_completed":
-      return String(payload.metadata?.feedbackId ?? payload.metadata?.sessionLogId ?? "unknown");
-    case "schedule_cron":
-      return String(payload.metadata?.cronKey ?? "cron");
-    case "subscription_renewal_due":
-      return String(payload.metadata?.renewalKey ?? "renewal");
-    default:
-      return `event:${Date.now()}`;
-  }
-}
+export { resolveTriggerEventId } from "./trigger-event-id";
 
 export async function dispatchAutomationTrigger(
   triggerType: AutomationTriggerType,
