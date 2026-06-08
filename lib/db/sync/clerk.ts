@@ -7,6 +7,7 @@ import {
   teamMembers,
 } from "@/lib/db/schema";
 import { mapClerkRoleToTeamMemberRole } from "@/lib/auth/roles";
+import { isClientClerkRole } from "@/lib/clients/invite";
 import {
   mapClerkPlanSlugToTier,
   mapClerkSubscriptionStatus,
@@ -95,7 +96,7 @@ export async function handleOrganizationDeleted(data: {
 
 export async function handleOrganizationMembershipUpsert(data: {
   organization: { id: string };
-  public_user_data: { user_id: string };
+  public_user_data: { user_id: string; identifier?: string };
   role: string;
 }): Promise<void> {
   const org = await db.query.organizations.findFirst({
@@ -107,6 +108,11 @@ export async function handleOrganizationMembershipUpsert(data: {
     logger.warn("Organization membership sync skipped: org not found", {
       clerkOrgId: data.organization.id,
     });
+    return;
+  }
+
+  if (isClientClerkRole(data.role)) {
+    await linkClientMembership(org.id, data);
     return;
   }
 
@@ -129,9 +135,52 @@ export async function handleOrganizationMembershipUpsert(data: {
     });
 }
 
+async function linkClientMembership(
+  organizationId: string,
+  data: {
+    public_user_data: { user_id: string; identifier?: string };
+  },
+): Promise<void> {
+  const email = data.public_user_data.identifier?.toLowerCase();
+
+  if (!email) {
+    logger.warn("Client membership sync skipped: missing email identifier", {
+      clerkUserId: data.public_user_data.user_id,
+    });
+    return;
+  }
+
+  const client = await db.query.clients.findFirst({
+    where: and(
+      eq(clients.organizationId, organizationId),
+      eq(clients.email, email),
+    ),
+    columns: { id: true },
+  });
+
+  if (!client) {
+    logger.warn("Client membership sync skipped: client not found", {
+      organizationId,
+      email,
+    });
+    return;
+  }
+
+  await db
+    .update(clients)
+    .set({
+      clerkUserId: data.public_user_data.user_id,
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(clients.organizationId, organizationId), eq(clients.id, client.id)),
+    );
+}
+
 export async function handleOrganizationMembershipDeleted(data: {
   organization: { id: string };
-  public_user_data: { user_id: string };
+  public_user_data: { user_id: string; identifier?: string };
+  role?: string;
 }): Promise<void> {
   const org = await db.query.organizations.findFirst({
     where: eq(organizations.clerkOrgId, data.organization.id),
@@ -139,6 +188,19 @@ export async function handleOrganizationMembershipDeleted(data: {
   });
 
   if (!org) {
+    return;
+  }
+
+  if (data.role && isClientClerkRole(data.role)) {
+    await db
+      .update(clients)
+      .set({ clerkUserId: null, updatedAt: new Date() })
+      .where(
+        and(
+          eq(clients.organizationId, org.id),
+          eq(clients.clerkUserId, data.public_user_data.user_id),
+        ),
+      );
     return;
   }
 

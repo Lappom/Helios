@@ -8,7 +8,6 @@ import {
 } from "drizzle-orm/pg-core";
 import { createId } from "../id";
 import {
-  clientStatusEnum,
   planTierEnum,
   subscriptionStatusEnum,
   teamMemberRoleEnum,
@@ -64,34 +63,6 @@ export const subscriptions = pgTable("subscriptions", {
     .defaultNow()
     .$onUpdate(() => new Date()),
 });
-
-export const clients = pgTable(
-  "clients",
-  {
-    id: text("id")
-      .primaryKey()
-      .$defaultFn(() => createId()),
-    organizationId: text("organization_id")
-      .notNull()
-      .references(() => organizations.id, { onDelete: "cascade" }),
-    clerkUserId: text("clerk_user_id"),
-    email: text("email").notNull(),
-    firstName: text("first_name").notNull(),
-    lastName: text("last_name").notNull(),
-    status: clientStatusEnum("status").notNull().default("PROSPECT"),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow()
-      .$onUpdate(() => new Date()),
-  },
-  (t) => [
-    uniqueIndex("clients_org_email_idx").on(t.organizationId, t.email),
-    index("clients_org_status_idx").on(t.organizationId, t.status),
-  ],
-);
 
 export const teamMembers = pgTable(
   "team_members",

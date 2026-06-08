@@ -61,6 +61,7 @@ export async function POST(req: NextRequest) {
       await handleOrganizationMembershipDeleted({
         organization,
         public_user_data: publicUserData,
+        role: data.role ? String(data.role) : undefined,
       });
     } else if (eventType === "user.updated") {
       await handleUserUpdated({
