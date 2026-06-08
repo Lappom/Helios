@@ -7,6 +7,7 @@ import { Copy, Pencil, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { AssignProgramDialog } from "@/components/coach/programs/assign-program-dialog";
 import { CreateProgramDialog } from "@/components/coach/programs/create-program-dialog";
+import { GenerateProgramDialog } from "@/components/coach/programs/generate-program-dialog";
 import { ProgramStatusBadge } from "@/components/coach/programs/program-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -121,7 +122,10 @@ export function ProgramsPageClient({
             Créez, structurez et publiez vos plans d&apos;entraînement.
           </p>
         </div>
-        <CreateProgramDialog />
+        <div className="flex flex-wrap items-center gap-2">
+          <GenerateProgramDialog />
+          <CreateProgramDialog />
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-3">

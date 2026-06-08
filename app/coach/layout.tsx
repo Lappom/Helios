@@ -1,3 +1,4 @@
+import { CoachAiChatTrigger } from "@/components/coach/ai/coach-ai-chat-trigger";
 import { CoachHeader } from "@/components/design/coach-header";
 import { CoachSidebar } from "@/components/design/coach-sidebar";
 
@@ -13,6 +14,7 @@ export default function CoachLayout({
         <CoachHeader />
         <main className="flex-1 px-6 py-8">{children}</main>
       </div>
+      <CoachAiChatTrigger />
     </div>
   );
 }
